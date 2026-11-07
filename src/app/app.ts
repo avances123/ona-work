@@ -517,7 +517,8 @@ import { ParentDashboardComponent } from './components/parent-dashboard/parent-d
         display: grid;
         grid-template-columns: repeat(4, 58px);
         grid-template-rows: repeat(4, 58px);
-        background: #ffffff;
+        width: fit-content;
+        height: fit-content;
         border: 3px solid #1e293b;
         border-radius: 8px;
         margin: 0 auto 18px auto;
@@ -526,6 +527,8 @@ import { ParentDashboardComponent } from './components/parent-dashboard/parent-d
       .sudoku-cell {
         background: #ffffff;
         border: 1px solid #cbd5e1;
+        width: 58px;
+        height: 58px;
         display: flex;
         align-items: center;
         justify-content: center;
