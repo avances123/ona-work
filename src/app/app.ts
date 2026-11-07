@@ -31,14 +31,6 @@ import { ParentDashboardComponent } from './components/parent-dashboard/parent-d
             <div class="progress-fill" [style.width.%]="progressPercentage()"></div>
           </div>
         </div>
-
-        <button
-          class="secret-dashboard-btn"
-          title="Vista Papá (Control)"
-          (click)="showDashboard.set(true)"
-        >
-          ⚙️
-        </button>
       </header>
 
       <!-- Zona de trabajo principal -->
@@ -209,6 +201,8 @@ import { ParentDashboardComponent } from './components/parent-dashboard/parent-d
       <app-parent-dashboard
         *ngIf="showDashboard()"
         (closed)="showDashboard.set(false)"
+        (restartRequested)="restartSession()"
+        (continueRequested)="continueSessionWithFilter()"
       ></app-parent-dashboard>
     </main>
   `,
@@ -670,6 +664,7 @@ export class App implements OnInit, OnDestroy {
   private readonly generator = inject(ExerciseGeneratorService);
 
   public readonly showDashboard = signal<boolean>(false);
+  private windowKeydownListener = (e: KeyboardEvent) => this.handleGlobalKeydown(e);
   public readonly currentExerciseIndex = signal<number>(0);
   public readonly sessionFinished = signal<boolean>(false);
 
@@ -710,12 +705,22 @@ export class App implements OnInit, OnDestroy {
   });
 
   ngOnInit(): void {
+    window.addEventListener('keydown', this.windowKeydownListener);
     this.startSession();
   }
 
   ngOnDestroy(): void {
+    window.removeEventListener('keydown', this.windowKeydownListener);
     if (this.mosaicCountdownInterval) {
       clearInterval(this.mosaicCountdownInterval);
+    }
+  }
+
+  private handleGlobalKeydown(e: KeyboardEvent): void {
+    // Hotkey: Alt+P (o Ctrl+Shift+P) para abrir/cerrar el panel de papá
+    if ((e.altKey && e.code === 'KeyP') || (e.ctrlKey && e.shiftKey && e.code === 'KeyP')) {
+      e.preventDefault();
+      this.showDashboard.update((v) => !v);
     }
   }
 
@@ -931,6 +936,23 @@ export class App implements OnInit, OnDestroy {
 
   restartSession(): void {
     this.startSession();
+  }
+
+  continueSessionWithFilter(): void {
+    const enabled = this.storage.enabledTypes();
+    const currentList = this.exercises();
+    const currentIndex = this.currentExerciseIndex();
+
+    // Conservar los ejercicios ya terminados (de 0 a currentIndex - 1)
+    const completed = currentList.slice(0, currentIndex);
+
+    // Regenerar los restantes para que se ajusten a los tipos seleccionados
+    const remainingCount = currentList.length - currentIndex;
+    const newRemaining = this.generator.generateSession(remainingCount, enabled);
+
+    const updated = [...completed, ...newRemaining];
+    this.exercises.set(updated);
+    this.initCurrentExercise();
   }
 
   asCalc(e: Exercise): CalcExercise {

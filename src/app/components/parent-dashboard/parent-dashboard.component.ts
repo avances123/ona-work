@@ -86,6 +86,10 @@ import { ExerciseType } from '../../models/exercise.model';
         </section>
 
         <footer class="modal-footer">
+          <div class="session-actions">
+            <button class="action-btn continue-session-btn" (click)="continueSession()">Continuar Sesión</button>
+            <button class="action-btn restart-session-btn" (click)="restartSession()">Reiniciar Sesión</button>
+          </div>
           <button class="clear-btn" (click)="clearAll()">Borrar Historial</button>
         </footer>
       </div>
@@ -265,7 +269,36 @@ import { ExerciseType } from '../../models/exercise.model';
         padding: 14px 24px;
         border-top: 1px solid #e2e8f0;
         display: flex;
-        justify-content: flex-end;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+      }
+      .session-actions {
+        display: flex;
+        gap: 10px;
+      }
+      .action-btn {
+        border: none;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+      .continue-session-btn {
+        background: #0284c7;
+        color: #ffffff;
+      }
+      .continue-session-btn:hover {
+        background: #0369a1;
+      }
+      .restart-session-btn {
+        background: #16a34a;
+        color: #ffffff;
+      }
+      .restart-session-btn:hover {
+        background: #15803d;
       }
       .clear-btn {
         background: #fee2e2;
@@ -299,6 +332,18 @@ export class ParentDashboardComponent {
   });
 
   public readonly closed = output<void>();
+  public readonly restartRequested = output<void>();
+  public readonly continueRequested = output<void>();
+
+  continueSession(): void {
+    this.continueRequested.emit();
+    this.closed.emit();
+  }
+
+  restartSession(): void {
+    this.restartRequested.emit();
+    this.closed.emit();
+  }
 
   isTypeEnabled(type: ExerciseType): boolean {
     return this.enabledTypes().includes(type);
