@@ -1,4 +1,4 @@
-export type ExerciseType = 'calc' | 'mosaic' | 'series' | 'coords';
+export type ExerciseType = 'calc' | 'mosaic' | 'series' | 'coords' | 'sudoku';
 
 export interface BaseExercise {
   id: string;
@@ -17,8 +17,8 @@ export interface CalcExercise extends BaseExercise {
 
 export interface MosaicExercise extends BaseExercise {
   type: 'mosaic';
-  gridSize: number; // 3 for 3x3
-  targetCells: number[]; // indices 0 to 8
+  gridSize: number; // 4 for 4x4 (16 cells)
+  targetCells: number[]; // indices 0 to 15
   memorizeSeconds: number; // 5 seconds
 }
 
@@ -37,4 +37,19 @@ export interface CoordsExercise extends BaseExercise {
   highlightAxis?: 'col' | 'row';
 }
 
-export type Exercise = CalcExercise | MosaicExercise | SeriesExercise | CoordsExercise;
+export interface SudokuExercise extends BaseExercise {
+  type: 'sudoku';
+  grid: (number | null)[]; // 16 cells (4x4)
+  solution: number[]; // 16 cells
+  initialGiven: boolean[]; // 16 flags
+  highlightedRow?: number;
+  highlightedCol?: number;
+}
+
+export type Exercise =
+  | CalcExercise
+  | MosaicExercise
+  | SeriesExercise
+  | CoordsExercise
+  | SudokuExercise;
+

@@ -46,6 +46,7 @@ import { StorageService } from '../../services/storage.service';
                     <th>#</th>
                     <th>Ejercicio</th>
                     <th>Tiempo Foco</th>
+                    <th>Fallos / Intentos</th>
                     <th>Pausas Inactividad</th>
                   </tr>
                 </thead>
@@ -54,6 +55,11 @@ import { StorageService } from '../../services/storage.service';
                     <td>{{ i + 1 }}</td>
                     <td>{{ ex.title }}</td>
                     <td>{{ ex.elapsedSeconds }}s</td>
+                    <td>
+                      <span [style.color]="(ex.attemptsCount || 1) > 1 ? '#dc2626' : '#16a34a'" [style.fontWeight]="'700'">
+                        {{ (ex.attemptsCount || 1) - 1 }} fallos ({{ ex.attemptsCount || 1 }} intentos)
+                      </span>
+                    </td>
                     <td>{{ ex.idlePausesCount }}</td>
                   </tr>
                 </tbody>

@@ -5,18 +5,20 @@ import {
   Exercise,
   MosaicExercise,
   SeriesExercise,
+  SudokuExercise,
 } from '../models/exercise.model';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ExerciseGeneratorService {
-  // Genera una tanda balanceada de N ejercicios rotando por los 4 bloques
-  generateSession(count: number = 8): Exercise[] {
+  // Genera una tanda balanceada de N ejercicios rotando por los 5 bloques
+  generateSession(count: number = 10): Exercise[] {
     const exercises: Exercise[] = [];
-    const types: ('calc' | 'mosaic' | 'series' | 'coords')[] = [
+    const types: ('calc' | 'mosaic' | 'sudoku' | 'series' | 'coords')[] = [
       'calc',
       'mosaic',
+      'sudoku',
       'series',
       'coords',
     ];
@@ -37,6 +39,9 @@ export class ExerciseGeneratorService {
           break;
         case 'coords':
           exercises.push(this.generateCoords(id));
+          break;
+        case 'sudoku':
+          exercises.push(this.generateSudoku(id));
           break;
       }
     }
@@ -70,7 +75,6 @@ export class ExerciseGeneratorService {
       opText = `${a} − ${b}`;
     }
 
-    // Generar opciones con distractores cercanos
     const optionsSet = new Set<number>([correct]);
     while (optionsSet.size < 3) {
       const delta = (Math.random() > 0.5 ? 1 : -1) * (1 + Math.floor(Math.random() * 3));
@@ -91,18 +95,18 @@ export class ExerciseGeneratorService {
     };
   }
 
-  // 2. Mosaico 3x3 de memoria: 3 a 4 celdas negras aleatorias
+  // 2. Mosaico 4x4 de memoria: 5 a 6 casillas negras sobre 16 posibles
   private generateMosaic(id: string): MosaicExercise {
-    const numCells = 3 + Math.floor(Math.random() * 2); // 3 o 4 casillas
-    const allIndices = [0, 1, 2, 3, 4, 5, 6, 7, 8].sort(() => Math.random() - 0.5);
+    const numCells = 5 + Math.floor(Math.random() * 2); // 5 o 6 casillas
+    const allIndices = Array.from({ length: 16 }, (_, i) => i).sort(() => Math.random() - 0.5);
     const targetCells = allIndices.slice(0, numCells).sort((a, b) => a - b);
 
     return {
       id,
       type: 'mosaic',
-      title: 'Mosaico de Memoria',
-      instructions: 'Memoriza la posición de los cuadros negros:',
-      gridSize: 3,
+      title: 'Mosaico de Memoria 4×4',
+      instructions: 'Memoriza la posición de los cuadros negros (4×4):',
+      gridSize: 4,
       targetCells,
       memorizeSeconds: 5,
     };
@@ -110,7 +114,6 @@ export class ExerciseGeneratorService {
 
   // 3. Series visuales: alternancia de forma y variación de cantidad
   private generateSeries(id: string): SeriesExercise {
-    // Ejemplo: □ | ○ | □□ | ○○ | □□□ | ...
     const shapes = ['■', '●', '▲'].sort(() => Math.random() - 0.5);
     const shape1 = shapes[0];
     const shape2 = shapes[1];
@@ -123,12 +126,11 @@ export class ExerciseGeneratorService {
       { shape: shape1, count: 3 },
     ];
 
-    // El siguiente debe ser shape2 con 3
     const correctOption = { shape: shape2, count: 3 };
 
     const fakeOptions = [
-      { shape: shape1, count: 3 }, // misma forma anterior (error común en Ona)
-      { shape: shape2, count: 2 }, // forma correcta pero no incrementa
+      { shape: shape1, count: 3 },
+      { shape: shape2, count: 2 },
     ];
 
     const options = [correctOption, ...fakeOptions].sort(() => Math.random() - 0.5);
@@ -158,6 +160,53 @@ export class ExerciseGeneratorService {
       instructions: `Busca y toca la casilla:`,
       column: col,
       row,
+    };
+  }
+
+  // 5. Sudoku 4x4 procedural
+  private generateSudoku(id: string): SudokuExercise {
+    const base = [
+      [1, 2, 3, 4],
+      [3, 4, 1, 2],
+      [2, 1, 4, 3],
+      [4, 3, 2, 1],
+    ];
+
+    const symbols = [1, 2, 3, 4].sort(() => Math.random() - 0.5);
+    const mapped = base.map((row) => row.map((val) => symbols[val - 1]));
+
+    if (Math.random() > 0.5) {
+      [mapped[0], mapped[1]] = [mapped[1], mapped[0]];
+    }
+    if (Math.random() > 0.5) {
+      [mapped[2], mapped[3]] = [mapped[3], mapped[2]];
+    }
+
+    const solution: number[] = [];
+    for (let r = 0; r < 4; r++) {
+      for (let c = 0; c < 4; c++) {
+        solution.push(mapped[r][c]);
+      }
+    }
+
+    // 7 u 8 pistas dadas
+    const numGiven = 7 + Math.floor(Math.random() * 2);
+    const indices = Array.from({ length: 16 }, (_, i) => i).sort(() => Math.random() - 0.5);
+    const givenIndices = new Set(indices.slice(0, numGiven));
+
+    const grid: (number | null)[] = solution.map((val, idx) =>
+      givenIndices.has(idx) ? val : null
+    );
+    const initialGiven: boolean[] = solution.map((_, idx) => givenIndices.has(idx));
+
+    return {
+      id,
+      type: 'sudoku',
+      title: 'Sudoku 4×4',
+      instructions: 'Rellena las casillas vacías con números del 1 al 4:',
+      grid,
+      solution,
+      initialGiven,
     };
   }
 }

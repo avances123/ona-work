@@ -9,6 +9,7 @@ import {
   Exercise,
   MosaicExercise,
   SeriesExercise,
+  SudokuExercise,
 } from './models/exercise.model';
 import { ExerciseResult, SessionRecord } from './models/session.model';
 import { ParentDashboardComponent } from './components/parent-dashboard/parent-dashboard.component';
@@ -62,14 +63,14 @@ import { ParentDashboardComponent } from './components/parent-dashboard/parent-d
             </div>
           </div>
 
-          <!-- 2. BLOQUE MOSAICO 3x3 -->
+          <!-- 2. BLOQUE MOSAICO 4x4 (16 celdas) -->
           <div *ngIf="currentExercise().type === 'mosaic'" class="mosaic-block">
             <!-- Fase Memorizar (5s) -->
             <div *ngIf="mosaicPhase() === 'memorize'" class="mosaic-phase-memorize">
               <div class="mosaic-countdown">👀 Memoriza: {{ memorizeCountdown() }}s</div>
-              <div class="mosaic-grid">
+              <div class="mosaic-grid-4x4">
                 <div
-                  *ngFor="let cell of [0, 1, 2, 3, 4, 5, 6, 7, 8]"
+                  *ngFor="let cell of mosaicCells16"
                   class="mosaic-cell preview"
                   [class.filled]="isTargetCell(cell)"
                 ></div>
@@ -78,9 +79,9 @@ import { ParentDashboardComponent } from './components/parent-dashboard/parent-d
 
             <!-- Fase Reproducir -->
             <div *ngIf="mosaicPhase() === 'recall'" class="mosaic-phase-recall">
-              <div class="mosaic-grid">
+              <div class="mosaic-grid-4x4">
                 <button
-                  *ngFor="let cell of [0, 1, 2, 3, 4, 5, 6, 7, 8]"
+                  *ngFor="let cell of mosaicCells16"
                   class="mosaic-cell interactive"
                   [class.filled]="selectedCells().includes(cell)"
                   [class.flash]="isFlashingHint() && isTargetCell(cell)"
@@ -105,7 +106,6 @@ import { ParentDashboardComponent } from './components/parent-dashboard/parent-d
               <span class="series-unknown">?</span>
             </div>
 
-            <!-- Pista socrática en series -->
             <div *ngIf="seriesHintActive()" class="socratic-hint-banner">
               💡 {{ asSeries(currentExercise()).ruleHint }}
             </div>
@@ -128,7 +128,6 @@ import { ParentDashboardComponent } from './components/parent-dashboard/parent-d
             </div>
 
             <div class="chess-board">
-              <!-- Letras de columnas superiores -->
               <div class="coords-header-row">
                 <span class="corner-spacer"></span>
                 <span *ngFor="let c of cols" class="col-label">{{ c }}</span>
@@ -145,6 +144,37 @@ import { ParentDashboardComponent } from './components/parent-dashboard/parent-d
                 ></button>
               </div>
             </div>
+          </div>
+
+          <!-- 5. BLOQUE SUDOKU 4x4 -->
+          <div *ngIf="currentExercise().type === 'sudoku'" class="sudoku-block">
+            <div class="sudoku-board-4x4">
+              <div
+                *ngFor="let cellIdx of mosaicCells16"
+                class="sudoku-cell"
+                [class.given]="asSudoku(currentExercise()).initialGiven[cellIdx]"
+                [class.selected]="selectedSudokuCell() === cellIdx"
+                [class.border-right]="cellIdx % 4 === 1"
+                [class.border-bottom]="cellIdx >= 4 && cellIdx <= 7"
+                (click)="selectSudokuCell(cellIdx)"
+              >
+                {{ sudokuCurrentGrid()[cellIdx] || '' }}
+              </div>
+            </div>
+
+            <!-- Teclado de números para rellenar (1..4 y borrar) -->
+            <div class="sudoku-keypad">
+              <button
+                *ngFor="let num of [1, 2, 3, 4]"
+                class="keypad-btn"
+                (click)="inputSudokuNumber(num)"
+              >
+                {{ num }}
+              </button>
+              <button class="keypad-btn erase-btn" (click)="inputSudokuNumber(null)">⌫</button>
+            </div>
+
+            <button class="check-btn" (click)="onSudokuSubmit()">Comprobar Sudoku</button>
           </div>
 
           <!-- Feedback de error suave socrático -->
@@ -257,7 +287,7 @@ import { ParentDashboardComponent } from './components/parent-dashboard/parent-d
         background: #ffffff;
         border: 2px solid #e2e8f0;
         border-radius: 24px;
-        padding: 36px;
+        padding: 32px;
         box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
         max-width: 680px;
         width: 100%;
@@ -278,16 +308,16 @@ import { ParentDashboardComponent } from './components/parent-dashboard/parent-d
         margin-bottom: 8px;
       }
       .exercise-instructions {
-        font-size: 1.35rem;
+        font-size: 1.3rem;
         color: #334155;
-        margin: 0 0 24px 0;
+        margin: 0 0 20px 0;
       }
 
       /* Cálculo */
       .prompt-text {
         font-size: 3.2rem;
         font-weight: 800;
-        margin-bottom: 28px;
+        margin-bottom: 24px;
         color: #0f172a;
       }
       .options-grid {
@@ -300,7 +330,7 @@ import { ParentDashboardComponent } from './components/parent-dashboard/parent-d
         background: #f8fafc;
         border: 2px solid #cbd5e1;
         border-radius: 16px;
-        padding: 20px;
+        padding: 18px;
         font-size: 2.2rem;
         font-weight: 800;
         color: #0f172a;
@@ -319,22 +349,22 @@ import { ParentDashboardComponent } from './components/parent-dashboard/parent-d
         text-decoration: line-through;
       }
 
-      /* Mosaicos */
+      /* Mosaicos 4x4 */
       .mosaic-countdown {
         font-size: 1.2rem;
         font-weight: 700;
         color: #0284c7;
-        margin-bottom: 16px;
+        margin-bottom: 14px;
       }
-      .mosaic-grid {
+      .mosaic-grid-4x4 {
         display: grid;
-        grid-template-columns: repeat(3, 80px);
-        grid-template-rows: repeat(3, 80px);
+        grid-template-columns: repeat(4, 64px);
+        grid-template-rows: repeat(4, 64px);
         gap: 8px;
         margin: 0 auto 20px auto;
       }
       .mosaic-cell {
-        border-radius: 12px;
+        border-radius: 10px;
         border: 2px solid #cbd5e1;
         background: #f8fafc;
         transition: all 0.15s;
@@ -366,6 +396,7 @@ import { ParentDashboardComponent } from './components/parent-dashboard/parent-d
         font-weight: 700;
         border-radius: 14px;
         cursor: pointer;
+        margin-top: 10px;
       }
 
       /* Series */
@@ -452,7 +483,7 @@ import { ParentDashboardComponent } from './components/parent-dashboard/parent-d
         color: #64748b;
       }
       .col-label {
-        width: 40px;
+        width: 38px;
         height: 24px;
         display: flex;
         align-items: center;
@@ -463,8 +494,8 @@ import { ParentDashboardComponent } from './components/parent-dashboard/parent-d
         text-transform: uppercase;
       }
       .chess-cell {
-        width: 40px;
-        height: 40px;
+        width: 38px;
+        height: 38px;
         border: 1px solid #cbd5e1;
         background: #f8fafc;
         cursor: pointer;
@@ -479,6 +510,70 @@ import { ParentDashboardComponent } from './components/parent-dashboard/parent-d
       }
       .chess-cell.highlight-axis {
         background: #fde047 !important;
+      }
+
+      /* Sudoku 4x4 */
+      .sudoku-board-4x4 {
+        display: grid;
+        grid-template-columns: repeat(4, 56px);
+        grid-template-rows: repeat(4, 56px);
+        gap: 2px;
+        background: #475569;
+        padding: 4px;
+        border-radius: 12px;
+        margin: 0 auto 18px auto;
+      }
+      .sudoku-cell {
+        background: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: #2563eb;
+        cursor: pointer;
+        user-select: none;
+      }
+      .sudoku-cell.given {
+        color: #0f172a;
+        background: #f1f5f9;
+        cursor: not-allowed;
+      }
+      .sudoku-cell.selected {
+        background: #e0f2fe;
+        outline: 3px solid #0284c7;
+        z-index: 2;
+      }
+      .sudoku-cell.border-right {
+        margin-right: 3px;
+      }
+      .sudoku-cell.border-bottom {
+        margin-bottom: 3px;
+      }
+      .sudoku-keypad {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        margin-bottom: 16px;
+      }
+      .keypad-btn {
+        width: 52px;
+        height: 52px;
+        border-radius: 12px;
+        border: 2px solid #cbd5e1;
+        background: #ffffff;
+        font-size: 1.6rem;
+        font-weight: 700;
+        cursor: pointer;
+        color: #0f172a;
+        transition: all 0.1s;
+      }
+      .keypad-btn:hover {
+        border-color: #2563eb;
+        background: #f8fafc;
+      }
+      .erase-btn {
+        color: #dc2626;
       }
 
       .error-notice {
@@ -572,21 +667,29 @@ export class App implements OnInit, OnDestroy {
   public readonly currentExerciseIndex = signal<number>(0);
   public readonly sessionFinished = signal<boolean>(false);
 
-  // Lista procedural balanceada de 8 ejercicios por tanda
+  // Contador de intentos por ejercicio
+  public readonly currentAttempts = signal<number>(1);
+
+  // Lista procedural de 10 ejercicios por tanda
   public readonly exercises = signal<Exercise[]>([]);
 
-  // Estados socráticos y de interacción
+  // Estados socráticos
   public readonly socraticFeedback = signal<boolean>(false);
   public readonly seriesHintActive = signal<boolean>(false);
 
-  // Estados específicos para Mosaico
+  // Mosaico 4x4 (16 celdas: 0 a 15)
+  public readonly mosaicCells16 = Array.from({ length: 16 }, (_, i) => i);
   public readonly mosaicPhase = signal<'memorize' | 'recall'>('memorize');
   public readonly memorizeCountdown = signal<number>(5);
   public readonly selectedCells = signal<number[]>([]);
   public readonly isFlashingHint = signal<boolean>(false);
   private mosaicCountdownInterval: any = null;
 
-  // Estados específicos para Coordenadas
+  // Sudoku 4x4
+  public readonly sudokuCurrentGrid = signal<(number | null)[]>([]);
+  public readonly selectedSudokuCell = signal<number | null>(null);
+
+  // Coordenadas
   public readonly cols = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
   public readonly rows = [8, 7, 6, 5, 4, 3, 2, 1];
   public readonly highlightedCoordsAxis = signal<'col' | 'row' | null>(null);
@@ -613,28 +716,33 @@ export class App implements OnInit, OnDestroy {
   startSession(): void {
     this.sessionStartTime = new Date().toISOString();
     this.recordedResults = [];
-    this.exercises.set(this.generator.generateSession(8));
+    this.exercises.set(this.generator.generateSession(10));
     this.currentExerciseIndex.set(0);
     this.sessionFinished.set(false);
     this.initCurrentExercise();
   }
 
   private initCurrentExercise(): void {
+    this.currentAttempts.set(1);
     this.socraticFeedback.set(false);
     this.seriesHintActive.set(false);
     this.highlightedCoordsAxis.set(null);
     this.selectedCells.set([]);
     this.isFlashingHint.set(false);
+    this.selectedSudokuCell.set(null);
 
     const current = this.currentExercise();
     if (current && current.type === 'mosaic') {
       this.startMosaicMemorizePhase();
+    } else if (current && current.type === 'sudoku') {
+      this.sudokuCurrentGrid.set([...current.grid]);
+      this.timer.start();
     } else {
       this.timer.start();
     }
   }
 
-  // --- Manejo de Mosaico ---
+  // --- Mosaico 4x4 ---
   private startMosaicMemorizePhase(): void {
     this.mosaicPhase.set('memorize');
     this.memorizeCountdown.set(5);
@@ -648,7 +756,7 @@ export class App implements OnInit, OnDestroy {
       if (this.memorizeCountdown() <= 0) {
         clearInterval(this.mosaicCountdownInterval);
         this.mosaicPhase.set('recall');
-        this.timer.start(); // El cronómetro de foco arranca en la fase de recuerdo
+        this.timer.start();
       }
     }, 1000);
   }
@@ -676,20 +784,50 @@ export class App implements OnInit, OnDestroy {
     if (isMatch) {
       this.handleExerciseSuccess();
     } else {
-      // Pista socrática en mosaico: destello breve del modelo 1s
+      this.currentAttempts.update((a) => a + 1);
       this.socraticFeedback.set(true);
       this.isFlashingHint.set(true);
       setTimeout(() => this.isFlashingHint.set(false), 1000);
     }
   }
 
-  // --- Manejo de Cálculo ---
+  // --- Sudoku 4x4 ---
+  selectSudokuCell(idx: number): void {
+    const current = this.asSudoku(this.currentExercise());
+    if (current.initialGiven[idx]) return;
+    this.selectedSudokuCell.set(idx);
+  }
+
+  inputSudokuNumber(num: number | null): void {
+    const selected = this.selectedSudokuCell();
+    if (selected === null) return;
+    const updated = [...this.sudokuCurrentGrid()];
+    updated[selected] = num;
+    this.sudokuCurrentGrid.set(updated);
+  }
+
+  onSudokuSubmit(): void {
+    const current = this.asSudoku(this.currentExercise());
+    const currentGrid = this.sudokuCurrentGrid();
+    const isCompleteAndCorrect = currentGrid.every(
+      (val, idx) => val !== null && val === current.solution[idx]
+    );
+
+    if (isCompleteAndCorrect) {
+      this.handleExerciseSuccess();
+    } else {
+      this.currentAttempts.update((a) => a + 1);
+      this.socraticFeedback.set(true);
+    }
+  }
+
+  // --- Cálculo ---
   onCalcAnswer(selected: number): void {
     const current = this.currentExercise() as CalcExercise;
     if (selected === current.correctAnswer) {
       this.handleExerciseSuccess();
     } else {
-      // Pista socrática en cálculo: descartar una opción errónea
+      this.currentAttempts.update((a) => a + 1);
       this.socraticFeedback.set(true);
       const wrongOptions = current.options.filter(
         (opt) => opt !== current.correctAnswer && opt !== current.discardedOption
@@ -700,7 +838,7 @@ export class App implements OnInit, OnDestroy {
     }
   }
 
-  // --- Manejo de Series ---
+  // --- Series ---
   onSeriesAnswer(selected: { shape: string; count: number }): void {
     const current = this.currentExercise() as SeriesExercise;
     const isCorrect =
@@ -710,7 +848,7 @@ export class App implements OnInit, OnDestroy {
     if (isCorrect) {
       this.handleExerciseSuccess();
     } else {
-      // Pista socrática en series: activar el recordatorio de regla
+      this.currentAttempts.update((a) => a + 1);
       this.socraticFeedback.set(true);
       this.seriesHintActive.set(true);
     }
@@ -720,7 +858,7 @@ export class App implements OnInit, OnDestroy {
     return shape.repeat(count);
   }
 
-  // --- Manejo de Coordenadas ---
+  // --- Coordenadas ---
   colIndex(c: string): number {
     return this.cols.indexOf(c);
   }
@@ -737,7 +875,7 @@ export class App implements OnInit, OnDestroy {
     if (c === current.column && r === current.row) {
       this.handleExerciseSuccess();
     } else {
-      // Pista socrática en coordenadas: resaltar fila o columna
+      this.currentAttempts.update((a) => a + 1);
       this.socraticFeedback.set(true);
       this.highlightedCoordsAxis.set(this.highlightedCoordsAxis() === 'col' ? 'row' : 'col');
     }
@@ -754,6 +892,7 @@ export class App implements OnInit, OnDestroy {
       type: current.type,
       elapsedSeconds: elapsed,
       idlePausesCount: this.timer.idlePausesCount(),
+      attemptsCount: this.currentAttempts(),
       completedAt: new Date().toISOString(),
       success: true,
     });
@@ -786,7 +925,6 @@ export class App implements OnInit, OnDestroy {
     this.startSession();
   }
 
-  // Type guards para templates
   asCalc(e: Exercise): CalcExercise {
     return e as CalcExercise;
   }
@@ -795,5 +933,8 @@ export class App implements OnInit, OnDestroy {
   }
   asCoords(e: Exercise): CoordsExercise {
     return e as CoordsExercise;
+  }
+  asSudoku(e: Exercise): SudokuExercise {
+    return e as SudokuExercise;
   }
 }
