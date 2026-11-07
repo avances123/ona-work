@@ -722,7 +722,8 @@ export class App implements OnInit, OnDestroy {
   startSession(): void {
     this.sessionStartTime = new Date().toISOString();
     this.recordedResults = [];
-    this.exercises.set(this.generator.generateSession(10));
+    const enabled = this.storage.enabledTypes();
+    this.exercises.set(this.generator.generateSession(10, enabled));
     this.currentExerciseIndex.set(0);
     this.sessionFinished.set(false);
     this.initCurrentExercise();

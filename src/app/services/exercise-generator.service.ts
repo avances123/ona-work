@@ -3,6 +3,7 @@ import {
   CalcExercise,
   CoordsExercise,
   Exercise,
+  ExerciseType,
   MosaicExercise,
   SeriesExercise,
   SeriesItem,
@@ -30,18 +31,14 @@ export class ExerciseGeneratorService {
     { code: '#0f172a', name: 'negro' },
   ];
 
-  generateSession(count: number = 10): Exercise[] {
+  generateSession(count: number = 10, enabledTypes?: ExerciseType[]): Exercise[] {
     const exercises: Exercise[] = [];
-    const types: ('calc' | 'mosaic' | 'sudoku' | 'series' | 'coords')[] = [
-      'calc',
-      'mosaic',
-      'sudoku',
-      'series',
-      'coords',
-    ];
+    const availableTypes = (enabledTypes && enabledTypes.length > 0)
+      ? enabledTypes
+      : (['calc', 'mosaic', 'sudoku', 'series', 'coords'] as ExerciseType[]);
 
     for (let i = 0; i < count; i++) {
-      const type = types[i % types.length];
+      const type = availableTypes[i % availableTypes.length];
       const id = `ex-${Date.now()}-${i}`;
 
       switch (type) {
@@ -261,7 +258,7 @@ export class ExerciseGeneratorService {
     };
   }
 
-  // 5. Sudoku 4x4
+  // 5. Sudoku 4x4 con garantía matemática de solución única
   private generateSudoku(id: string): SudokuExercise {
     const base = [
       [1, 2, 3, 4],
@@ -287,14 +284,22 @@ export class ExerciseGeneratorService {
       }
     }
 
-    const numGiven = 7 + Math.floor(Math.random() * 2);
-    const indices = Array.from({ length: 16 }, (_, i) => i).sort(() => Math.random() - 0.5);
-    const givenIndices = new Set(indices.slice(0, numGiven));
+    // Comenzar con el tablero completo y remover casillas manteniendo solución única
+    const grid: (number | null)[] = [...solution];
+    const cellOrder = Array.from({ length: 16 }, (_, i) => i).sort(() => Math.random() - 0.5);
 
-    const grid: (number | null)[] = solution.map((val, idx) =>
-      givenIndices.has(idx) ? val : null
-    );
-    const initialGiven: boolean[] = solution.map((_, idx) => givenIndices.has(idx));
+    for (const cellIdx of cellOrder) {
+      const originalValue = grid[cellIdx];
+      grid[cellIdx] = null;
+
+      // Verificar si al quitar esta casilla sigue teniendo exactamente 1 solución
+      if (this.countSudokuSolutions(grid) !== 1) {
+        // Si pierde unicidad, restaurar el número como pista dada obligatoria
+        grid[cellIdx] = originalValue;
+      }
+    }
+
+    const initialGiven = grid.map((val) => val !== null);
 
     return {
       id,
@@ -305,5 +310,59 @@ export class ExerciseGeneratorService {
       solution,
       initialGiven,
     };
+  }
+
+  // Solucionador exhaustivo de backtracking para validar unicidad (para cuando soluciones > 1)
+  private countSudokuSolutions(grid: (number | null)[]): number {
+    let solutionsCount = 0;
+
+    const isValid = (current: (number | null)[], index: number, num: number): boolean => {
+      const r = Math.floor(index / 4);
+      const c = index % 4;
+
+      // Comprobar fila y columna
+      for (let i = 0; i < 4; i++) {
+        if (current[r * 4 + i] === num) return false;
+        if (current[i * 4 + c] === num) return false;
+      }
+
+      // Comprobar caja 2x2
+      const boxStartRow = Math.floor(r / 2) * 2;
+      const boxStartCol = Math.floor(c / 2) * 2;
+      for (let br = 0; br < 2; br++) {
+        for (let bc = 0; bc < 2; bc++) {
+          if (current[(boxStartRow + br) * 4 + (boxStartCol + bc)] === num) {
+            return false;
+          }
+        }
+      }
+
+      return true;
+    };
+
+    const solve = (current: (number | null)[], index: number): void => {
+      if (solutionsCount > 1) return; // Salida temprana si ya hay más de una solución
+
+      if (index === 16) {
+        solutionsCount++;
+        return;
+      }
+
+      if (current[index] !== null) {
+        solve(current, index + 1);
+        return;
+      }
+
+      for (let n = 1; n <= 4; n++) {
+        if (isValid(current, index, n)) {
+          current[index] = n;
+          solve(current, index + 1);
+          current[index] = null;
+        }
+      }
+    };
+
+    solve([...grid], 0);
+    return solutionsCount;
   }
 }

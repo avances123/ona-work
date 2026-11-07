@@ -1,6 +1,7 @@
 import { Component, computed, inject, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { StorageService } from '../../services/storage.service';
+import { ExerciseType } from '../../models/exercise.model';
 
 @Component({
   selector: 'app-parent-dashboard',
@@ -22,6 +23,22 @@ import { StorageService } from '../../services/storage.service';
           <div class="stat-card">
             <span class="label">Minutos de Foco Acumulados</span>
             <span class="value">{{ totalFocusMinutes() }} min</span>
+          </div>
+        </section>
+
+        <!-- Configuración de tipos de ejercicios para las sesiones -->
+        <section class="exercise-types-config">
+          <h3>Tipos de Ejercicios en Sesiones</h3>
+          <p class="config-desc">Selecciona los bloques que quieres que se generen en las tandas:</p>
+          <div class="types-grid">
+            <label *ngFor="let t of availableExerciseTypes" class="type-checkbox-label">
+              <input
+                type="checkbox"
+                [checked]="isTypeEnabled(t.id)"
+                (change)="toggleType(t.id)"
+              />
+              <span class="type-name">{{ t.label }}</span>
+            </label>
           </div>
         </section>
 
@@ -126,6 +143,44 @@ import { StorageService } from '../../services/storage.service';
         background: #f8fafc;
         border-bottom: 1px solid #e2e8f0;
       }
+      .exercise-types-config {
+        padding: 16px 24px;
+        background: #f1f5f9;
+        border-bottom: 1px solid #e2e8f0;
+      }
+      .exercise-types-config h3 {
+        margin: 0 0 4px 0;
+        font-size: 0.95rem;
+        color: #0f172a;
+      }
+      .config-desc {
+        margin: 0 0 10px 0;
+        font-size: 0.85rem;
+        color: #64748b;
+      }
+      .types-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+        gap: 10px;
+      }
+      .type-checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #ffffff;
+        padding: 8px 12px;
+        border-radius: 8px;
+        border: 1px solid #cbd5e1;
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #334155;
+      }
+      .type-checkbox-label input {
+        cursor: pointer;
+        width: 16px;
+        height: 16px;
+      }
       .stat-card {
         background: #ffffff;
         padding: 14px;
@@ -227,6 +282,15 @@ import { StorageService } from '../../services/storage.service';
 export class ParentDashboardComponent {
   private readonly storage = inject(StorageService);
   public readonly sessions = this.storage.sessions;
+  public readonly enabledTypes = this.storage.enabledTypes;
+
+  public readonly availableExerciseTypes: { id: ExerciseType; label: string }[] = [
+    { id: 'calc', label: 'Cálculo' },
+    { id: 'mosaic', label: 'Mosaicos 4×4' },
+    { id: 'sudoku', label: 'Sudokus 4×4' },
+    { id: 'series', label: 'Series Visuales' },
+    { id: 'coords', label: 'Coordenadas' },
+  ];
 
   public totalSessions = computed(() => this.sessions().length);
   public totalFocusMinutes = computed(() => {
@@ -235,6 +299,25 @@ export class ParentDashboardComponent {
   });
 
   public readonly closed = output<void>();
+
+  isTypeEnabled(type: ExerciseType): boolean {
+    return this.enabledTypes().includes(type);
+  }
+
+  toggleType(type: ExerciseType): void {
+    const current = this.enabledTypes();
+    let updated: ExerciseType[];
+    if (current.includes(type)) {
+      if (current.length === 1) {
+        alert('Debe haber al menos un tipo de ejercicio seleccionado.');
+        return;
+      }
+      updated = current.filter((t) => t !== type);
+    } else {
+      updated = [...current, type];
+    }
+    this.storage.saveEnabledTypes(updated);
+  }
 
   formatMinutes(seconds: number): string {
     const mins = Math.floor(seconds / 60);
