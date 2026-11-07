@@ -1,17 +1,17 @@
-import { Component, computed, inject, signal, OnInit } from '@angular/core';
+import { Component, computed, inject, signal, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FocusTimerService } from './services/focus-timer.service';
 import { StorageService } from './services/storage.service';
+import { ExerciseGeneratorService } from './services/exercise-generator.service';
+import {
+  CalcExercise,
+  CoordsExercise,
+  Exercise,
+  MosaicExercise,
+  SeriesExercise,
+} from './models/exercise.model';
 import { ExerciseResult, SessionRecord } from './models/session.model';
 import { ParentDashboardComponent } from './components/parent-dashboard/parent-dashboard.component';
-
-interface ExerciseDef {
-  id: string;
-  title: string;
-  prompt: string;
-  targetAnswer: number;
-  options: number[];
-}
 
 @Component({
   selector: 'app-root',
@@ -19,11 +19,11 @@ interface ExerciseDef {
   imports: [CommonModule, ParentDashboardComponent],
   template: `
     <main class="app-container">
-      <!-- Barra superior discreta: progreso N ejercicios y acceso papá -->
+      <!-- Barra superior discreta -->
       <header class="top-bar">
         <div class="progress-info">
           <span class="exercise-indicator">
-            Ejercicio {{ currentExerciseIndex() + 1 }} de {{ exercises.length }}
+            Ejercicio {{ currentExerciseIndex() + 1 }} de {{ exercises().length }}
           </span>
           <div class="progress-track">
             <div class="progress-fill" [style.width.%]="progressPercentage()"></div>
@@ -42,19 +42,118 @@ interface ExerciseDef {
       <!-- Zona de trabajo principal -->
       <section class="workspace">
         <div *ngIf="!sessionFinished(); else finishedTemplate" class="exercise-card">
-          <h1 class="exercise-prompt">{{ currentExercise().prompt }}</h1>
+          <!-- Cabecera del ejercicio -->
+          <span class="exercise-type-tag">{{ currentExercise().title }}</span>
+          <h2 class="exercise-instructions">{{ currentExercise().instructions }}</h2>
 
-          <div class="options-grid">
-            <button
-              *ngFor="let opt of currentExercise().options"
-              class="option-btn"
-              (click)="selectOption(opt)"
-            >
-              {{ opt }}
-            </button>
+          <!-- 1. BLOQUE CÁLCULO -->
+          <div *ngIf="currentExercise().type === 'calc'" class="calc-block">
+            <div class="prompt-text">{{ asCalc(currentExercise()).operationText }} = ?</div>
+            <div class="options-grid">
+              <button
+                *ngFor="let opt of asCalc(currentExercise()).options"
+                class="option-btn"
+                [disabled]="opt === asCalc(currentExercise()).discardedOption"
+                [class.discarded]="opt === asCalc(currentExercise()).discardedOption"
+                (click)="onCalcAnswer(opt)"
+              >
+                {{ opt }}
+              </button>
+            </div>
+          </div>
+
+          <!-- 2. BLOQUE MOSAICO 3x3 -->
+          <div *ngIf="currentExercise().type === 'mosaic'" class="mosaic-block">
+            <!-- Fase Memorizar (5s) -->
+            <div *ngIf="mosaicPhase() === 'memorize'" class="mosaic-phase-memorize">
+              <div class="mosaic-countdown">👀 Memoriza: {{ memorizeCountdown() }}s</div>
+              <div class="mosaic-grid">
+                <div
+                  *ngFor="let cell of [0, 1, 2, 3, 4, 5, 6, 7, 8]"
+                  class="mosaic-cell preview"
+                  [class.filled]="isTargetCell(cell)"
+                ></div>
+              </div>
+            </div>
+
+            <!-- Fase Reproducir -->
+            <div *ngIf="mosaicPhase() === 'recall'" class="mosaic-phase-recall">
+              <div class="mosaic-grid">
+                <button
+                  *ngFor="let cell of [0, 1, 2, 3, 4, 5, 6, 7, 8]"
+                  class="mosaic-cell interactive"
+                  [class.filled]="selectedCells().includes(cell)"
+                  [class.flash]="isFlashingHint() && isTargetCell(cell)"
+                  (click)="toggleMosaicCell(cell)"
+                ></button>
+              </div>
+              <button class="check-btn" (click)="onMosaicSubmit()">Comprobar</button>
+            </div>
+          </div>
+
+          <!-- 3. BLOQUE SERIES VISUALES -->
+          <div *ngIf="currentExercise().type === 'series'" class="series-block">
+            <div class="series-sequence">
+              <div
+                *ngFor="let item of asSeries(currentExercise()).sequence; let last = last"
+                class="series-item"
+              >
+                <span class="shape-symbol">{{ repeatShape(item.shape, item.count) }}</span>
+                <span *ngIf="!last" class="series-sep">|</span>
+              </div>
+              <span class="series-sep">|</span>
+              <span class="series-unknown">?</span>
+            </div>
+
+            <!-- Pista socrática en series -->
+            <div *ngIf="seriesHintActive()" class="socratic-hint-banner">
+              💡 {{ asSeries(currentExercise()).ruleHint }}
+            </div>
+
+            <div class="series-options">
+              <button
+                *ngFor="let opt of asSeries(currentExercise()).options"
+                class="series-option-btn"
+                (click)="onSeriesAnswer(opt)"
+              >
+                {{ repeatShape(opt.shape, opt.count) }}
+              </button>
+            </div>
+          </div>
+
+          <!-- 4. BLOQUE COORDENADAS 8x8 -->
+          <div *ngIf="currentExercise().type === 'coords'" class="coords-block">
+            <div class="coords-target-badge">
+              Casilla: <strong>{{ asCoords(currentExercise()).column.toUpperCase() }}{{ asCoords(currentExercise()).row }}</strong>
+            </div>
+
+            <div class="chess-board">
+              <!-- Letras de columnas superiores -->
+              <div class="coords-header-row">
+                <span class="corner-spacer"></span>
+                <span *ngFor="let c of cols" class="col-label">{{ c }}</span>
+              </div>
+
+              <div *ngFor="let r of rows" class="board-row">
+                <span class="row-label">{{ r }}</span>
+                <button
+                  *ngFor="let c of cols"
+                  class="chess-cell"
+                  [class.dark]="(colIndex(c) + r) % 2 === 0"
+                  [class.highlight-axis]="isCoordsAxisHighlighted(c, r)"
+                  (click)="onCoordsClick(c, r)"
+                ></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Feedback de error suave socrático -->
+          <div *ngIf="socraticFeedback()" class="error-notice">
+            <span>¡Casi! Inténtalo de nuevo con la pista.</span>
           </div>
         </div>
 
+        <!-- Pantalla de final de sesión -->
         <ng-template #finishedTemplate>
           <div class="finished-card">
             <div class="star-icon">⭐</div>
@@ -65,7 +164,7 @@ interface ExerciseDef {
         </ng-template>
       </section>
 
-      <!-- Overlay suave de pausa por inactividad (60 segundos) -->
+      <!-- Overlay suave de inactividad (60 segundos) -->
       <div *ngIf="timer.isIdle()" class="idle-overlay" (click)="timer.resumeFromIdle()">
         <div class="idle-box">
           <div class="idle-icon">🌱</div>
@@ -75,7 +174,7 @@ interface ExerciseDef {
         </div>
       </div>
 
-      <!-- Modal de supervisión para Papá -->
+      <!-- Panel de supervisión para Papá -->
       <app-parent-dashboard
         *ngIf="showDashboard()"
         (closed)="showDashboard.set(false)"
@@ -134,14 +233,6 @@ interface ExerciseDef {
         background: #22c55e;
         transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       }
-      .timer-display {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: #64748b;
-        background: #f1f5f9;
-        padding: 6px 14px;
-        border-radius: 20px;
-      }
       .secret-dashboard-btn {
         background: none;
         border: none;
@@ -159,49 +250,244 @@ interface ExerciseDef {
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 30px;
+        padding: 20px;
+        overflow-y: auto;
       }
       .exercise-card {
         background: #ffffff;
         border: 2px solid #e2e8f0;
         border-radius: 24px;
-        padding: 48px;
+        padding: 36px;
         box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
-        max-width: 650px;
+        max-width: 680px;
         width: 100%;
         text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
       }
-      .exercise-prompt {
-        font-size: 3rem;
-        margin-top: 0;
-        margin-bottom: 40px;
-        color: #1e293b;
-        letter-spacing: -0.02em;
+      .exercise-type-tag {
+        font-size: 0.85rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #2563eb;
+        background: #eff6ff;
+        padding: 4px 12px;
+        border-radius: 20px;
+        letter-spacing: 0.05em;
+        margin-bottom: 8px;
+      }
+      .exercise-instructions {
+        font-size: 1.35rem;
+        color: #334155;
+        margin: 0 0 24px 0;
+      }
+
+      /* Cálculo */
+      .prompt-text {
+        font-size: 3.2rem;
+        font-weight: 800;
+        margin-bottom: 28px;
+        color: #0f172a;
       }
       .options-grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 20px;
+        gap: 16px;
+        width: 100%;
       }
       .option-btn {
         background: #f8fafc;
         border: 2px solid #cbd5e1;
-        border-radius: 18px;
-        padding: 24px;
-        font-size: 2.5rem;
+        border-radius: 16px;
+        padding: 20px;
+        font-size: 2.2rem;
         font-weight: 800;
         color: #0f172a;
         cursor: pointer;
         transition: all 0.15s ease-in-out;
       }
-      .option-btn:hover {
+      .option-btn:hover:not(:disabled) {
         background: #f1f5f9;
         border-color: #3b82f6;
         transform: translateY(-2px);
       }
-      .option-btn:active {
-        transform: translateY(0);
+      .option-btn.discarded {
+        opacity: 0.25;
+        cursor: not-allowed;
+        background: #f1f5f9;
+        text-decoration: line-through;
       }
+
+      /* Mosaicos */
+      .mosaic-countdown {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #0284c7;
+        margin-bottom: 16px;
+      }
+      .mosaic-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 80px);
+        grid-template-rows: repeat(3, 80px);
+        gap: 8px;
+        margin: 0 auto 20px auto;
+      }
+      .mosaic-cell {
+        border-radius: 12px;
+        border: 2px solid #cbd5e1;
+        background: #f8fafc;
+        transition: all 0.15s;
+      }
+      .mosaic-cell.filled {
+        background: #0f172a;
+        border-color: #0f172a;
+      }
+      .mosaic-cell.interactive {
+        cursor: pointer;
+      }
+      .mosaic-cell.interactive:hover {
+        border-color: #3b82f6;
+      }
+      .mosaic-cell.flash {
+        animation: pulseFlash 0.5s ease-in-out 2;
+      }
+      @keyframes pulseFlash {
+        0% { background: #f8fafc; }
+        50% { background: #38bdf8; }
+        100% { background: #f8fafc; }
+      }
+      .check-btn {
+        background: #2563eb;
+        color: #ffffff;
+        border: none;
+        padding: 12px 32px;
+        font-size: 1.15rem;
+        font-weight: 700;
+        border-radius: 14px;
+        cursor: pointer;
+      }
+
+      /* Series */
+      .series-sequence {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        font-size: 2.2rem;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+      }
+      .series-sep {
+        color: #94a3b8;
+        font-weight: 300;
+      }
+      .series-unknown {
+        background: #eff6ff;
+        border: 2px dashed #3b82f6;
+        border-radius: 12px;
+        padding: 4px 16px;
+        color: #2563eb;
+        font-weight: 800;
+      }
+      .socratic-hint-banner {
+        background: #fef3c7;
+        color: #92400e;
+        padding: 10px 16px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+        font-size: 1rem;
+        font-weight: 500;
+      }
+      .series-options {
+        display: flex;
+        gap: 16px;
+        justify-content: center;
+        width: 100%;
+      }
+      .series-option-btn {
+        flex: 1;
+        background: #f8fafc;
+        border: 2px solid #cbd5e1;
+        border-radius: 16px;
+        padding: 16px;
+        font-size: 2rem;
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+      .series-option-btn:hover {
+        border-color: #3b82f6;
+        background: #f1f5f9;
+        transform: translateY(-2px);
+      }
+
+      /* Coordenadas */
+      .coords-target-badge {
+        font-size: 1.4rem;
+        color: #0f172a;
+        background: #f1f5f9;
+        padding: 8px 20px;
+        border-radius: 20px;
+        margin-bottom: 16px;
+      }
+      .chess-board {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .coords-header-row,
+      .board-row {
+        display: flex;
+        align-items: center;
+      }
+      .corner-spacer,
+      .row-label {
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: #64748b;
+      }
+      .col-label {
+        width: 40px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: #64748b;
+        text-transform: uppercase;
+      }
+      .chess-cell {
+        width: 40px;
+        height: 40px;
+        border: 1px solid #cbd5e1;
+        background: #f8fafc;
+        cursor: pointer;
+        transition: all 0.1s;
+      }
+      .chess-cell.dark {
+        background: #cbd5e1;
+      }
+      .chess-cell:hover {
+        outline: 2px solid #2563eb;
+        z-index: 2;
+      }
+      .chess-cell.highlight-axis {
+        background: #fde047 !important;
+      }
+
+      .error-notice {
+        margin-top: 16px;
+        color: #b45309;
+        font-weight: 600;
+        font-size: 0.95rem;
+      }
+
       .finished-card {
         background: #ffffff;
         border: 2px solid #bbf7d0;
@@ -220,14 +506,6 @@ interface ExerciseDef {
         margin: 0 0 12px 0;
         color: #166534;
       }
-      .session-summary-box {
-        background: #f0fdf4;
-        border: 1px solid #bbf7d0;
-        border-radius: 12px;
-        padding: 16px;
-        margin: 24px 0;
-        font-size: 1.1rem;
-      }
       .restart-btn {
         background: #16a34a;
         color: #ffffff;
@@ -237,6 +515,7 @@ interface ExerciseDef {
         font-weight: 700;
         border-radius: 14px;
         cursor: pointer;
+        margin-top: 16px;
       }
       .idle-overlay {
         position: fixed;
@@ -281,79 +560,207 @@ interface ExerciseDef {
         border-radius: 12px;
         cursor: pointer;
       }
-      @keyframes fadeIn {
-        from {
-          opacity: 0;
-        }
-        to {
-          opacity: 1;
-        }
-      }
     `,
   ],
 })
-export class App implements OnInit {
+export class App implements OnInit, OnDestroy {
   public readonly timer = inject(FocusTimerService);
   private readonly storage = inject(StorageService);
+  private readonly generator = inject(ExerciseGeneratorService);
 
   public readonly showDashboard = signal<boolean>(false);
   public readonly currentExerciseIndex = signal<number>(0);
   public readonly sessionFinished = signal<boolean>(false);
 
-  // Lista de ejercicios de la tanda actual (ejemplo aritmético acorde a 1.º EGB: tablas 1 a 4)
-  public readonly exercises: ExerciseDef[] = [
-    { id: 'ex-1', title: 'Multiplicación 4 x 2', prompt: '4 × 2 = ?', targetAnswer: 8, options: [6, 8, 12] },
-    { id: 'ex-2', title: 'Multiplicación 3 x 3', prompt: '3 × 3 = ?', targetAnswer: 9, options: [9, 6, 12] },
-    { id: 'ex-3', title: 'Multiplicación 4 x 4', prompt: '4 × 4 = ?', targetAnswer: 16, options: [14, 16, 18] },
-    { id: 'ex-4', title: 'Multiplicación 2 x 4', prompt: '2 × 4 = ?', targetAnswer: 8, options: [7, 8, 10] },
-    { id: 'ex-5', title: 'Multiplicación 3 x 4', prompt: '3 × 4 = ?', targetAnswer: 12, options: [10, 11, 12] },
-  ];
+  // Lista procedural balanceada de 8 ejercicios por tanda
+  public readonly exercises = signal<Exercise[]>([]);
+
+  // Estados socráticos y de interacción
+  public readonly socraticFeedback = signal<boolean>(false);
+  public readonly seriesHintActive = signal<boolean>(false);
+
+  // Estados específicos para Mosaico
+  public readonly mosaicPhase = signal<'memorize' | 'recall'>('memorize');
+  public readonly memorizeCountdown = signal<number>(5);
+  public readonly selectedCells = signal<number[]>([]);
+  public readonly isFlashingHint = signal<boolean>(false);
+  private mosaicCountdownInterval: any = null;
+
+  // Estados específicos para Coordenadas
+  public readonly cols = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+  public readonly rows = [8, 7, 6, 5, 4, 3, 2, 1];
+  public readonly highlightedCoordsAxis = signal<'col' | 'row' | null>(null);
 
   private sessionStartTime: string = '';
   private recordedResults: ExerciseResult[] = [];
 
-  public currentExercise = computed(() => this.exercises[this.currentExerciseIndex()]);
-  public progressPercentage = computed(
-    () => (this.currentExerciseIndex() / this.exercises.length) * 100
-  );
+  public currentExercise = computed(() => this.exercises()[this.currentExerciseIndex()]);
+  public progressPercentage = computed(() => {
+    const total = this.exercises().length;
+    return total > 0 ? (this.currentExerciseIndex() / total) * 100 : 0;
+  });
 
   ngOnInit(): void {
     this.startSession();
   }
 
+  ngOnDestroy(): void {
+    if (this.mosaicCountdownInterval) {
+      clearInterval(this.mosaicCountdownInterval);
+    }
+  }
+
   startSession(): void {
     this.sessionStartTime = new Date().toISOString();
     this.recordedResults = [];
+    this.exercises.set(this.generator.generateSession(8));
     this.currentExerciseIndex.set(0);
     this.sessionFinished.set(false);
-    this.timer.start();
+    this.initCurrentExercise();
   }
 
-  selectOption(selected: number): void {
-    if (this.sessionFinished()) return;
+  private initCurrentExercise(): void {
+    this.socraticFeedback.set(false);
+    this.seriesHintActive.set(false);
+    this.highlightedCoordsAxis.set(null);
+    this.selectedCells.set([]);
+    this.isFlashingHint.set(false);
 
     const current = this.currentExercise();
-    const isCorrect = selected === current.targetAnswer;
+    if (current && current.type === 'mosaic') {
+      this.startMosaicMemorizePhase();
+    } else {
+      this.timer.start();
+    }
+  }
 
-    if (!isCorrect) {
-      // Si falla, no avanza: fomenta corregir y concentrarse
-      return;
+  // --- Manejo de Mosaico ---
+  private startMosaicMemorizePhase(): void {
+    this.mosaicPhase.set('memorize');
+    this.memorizeCountdown.set(5);
+
+    if (this.mosaicCountdownInterval) {
+      clearInterval(this.mosaicCountdownInterval);
     }
 
+    this.mosaicCountdownInterval = setInterval(() => {
+      this.memorizeCountdown.update((v) => v - 1);
+      if (this.memorizeCountdown() <= 0) {
+        clearInterval(this.mosaicCountdownInterval);
+        this.mosaicPhase.set('recall');
+        this.timer.start(); // El cronómetro de foco arranca en la fase de recuerdo
+      }
+    }, 1000);
+  }
+
+  isTargetCell(cell: number): boolean {
+    const current = this.currentExercise();
+    return current.type === 'mosaic' && current.targetCells.includes(cell);
+  }
+
+  toggleMosaicCell(cell: number): void {
+    if (this.mosaicPhase() !== 'recall') return;
+    this.selectedCells.update((cells) =>
+      cells.includes(cell) ? cells.filter((c) => c !== cell) : [...cells, cell]
+    );
+  }
+
+  onMosaicSubmit(): void {
+    const current = this.currentExercise() as MosaicExercise;
+    const selected = [...this.selectedCells()].sort((a, b) => a - b);
+    const target = current.targetCells;
+
+    const isMatch =
+      selected.length === target.length && selected.every((val, idx) => val === target[idx]);
+
+    if (isMatch) {
+      this.handleExerciseSuccess();
+    } else {
+      // Pista socrática en mosaico: destello breve del modelo 1s
+      this.socraticFeedback.set(true);
+      this.isFlashingHint.set(true);
+      setTimeout(() => this.isFlashingHint.set(false), 1000);
+    }
+  }
+
+  // --- Manejo de Cálculo ---
+  onCalcAnswer(selected: number): void {
+    const current = this.currentExercise() as CalcExercise;
+    if (selected === current.correctAnswer) {
+      this.handleExerciseSuccess();
+    } else {
+      // Pista socrática en cálculo: descartar una opción errónea
+      this.socraticFeedback.set(true);
+      const wrongOptions = current.options.filter(
+        (opt) => opt !== current.correctAnswer && opt !== current.discardedOption
+      );
+      if (wrongOptions.length > 0) {
+        current.discardedOption = wrongOptions[0];
+      }
+    }
+  }
+
+  // --- Manejo de Series ---
+  onSeriesAnswer(selected: { shape: string; count: number }): void {
+    const current = this.currentExercise() as SeriesExercise;
+    const isCorrect =
+      selected.shape === current.correctOption.shape &&
+      selected.count === current.correctOption.count;
+
+    if (isCorrect) {
+      this.handleExerciseSuccess();
+    } else {
+      // Pista socrática en series: activar el recordatorio de regla
+      this.socraticFeedback.set(true);
+      this.seriesHintActive.set(true);
+    }
+  }
+
+  repeatShape(shape: string, count: number): string {
+    return shape.repeat(count);
+  }
+
+  // --- Manejo de Coordenadas ---
+  colIndex(c: string): number {
+    return this.cols.indexOf(c);
+  }
+
+  isCoordsAxisHighlighted(c: string, r: number): boolean {
+    const axis = this.highlightedCoordsAxis();
+    if (!axis) return false;
+    const current = this.currentExercise() as CoordsExercise;
+    return axis === 'col' ? c === current.column : r === current.row;
+  }
+
+  onCoordsClick(c: string, r: number): void {
+    const current = this.currentExercise() as CoordsExercise;
+    if (c === current.column && r === current.row) {
+      this.handleExerciseSuccess();
+    } else {
+      // Pista socrática en coordenadas: resaltar fila o columna
+      this.socraticFeedback.set(true);
+      this.highlightedCoordsAxis.set(this.highlightedCoordsAxis() === 'col' ? 'row' : 'col');
+    }
+  }
+
+  // --- Éxito y Progresión ---
+  private handleExerciseSuccess(): void {
+    const current = this.currentExercise();
     const elapsed = this.timer.stop();
+
     this.recordedResults.push({
       id: current.id,
       title: current.title,
-      type: 'math',
+      type: current.type,
       elapsedSeconds: elapsed,
       idlePausesCount: this.timer.idlePausesCount(),
       completedAt: new Date().toISOString(),
       success: true,
     });
 
-    if (this.currentExerciseIndex() + 1 < this.exercises.length) {
+    if (this.currentExerciseIndex() + 1 < this.exercises().length) {
       this.currentExerciseIndex.update((i) => i + 1);
-      this.timer.start();
+      this.initCurrentExercise();
     } else {
       this.completeSession();
     }
@@ -367,7 +774,7 @@ export class App implements OnInit {
       id: `session-${Date.now()}`,
       startedAt: this.sessionStartTime,
       completedAt: new Date().toISOString(),
-      totalExercises: this.exercises.length,
+      totalExercises: this.exercises().length,
       totalFocusSeconds: totalFocus,
       exercises: this.recordedResults,
     };
@@ -375,18 +782,18 @@ export class App implements OnInit {
     this.storage.saveSession(record);
   }
 
-  formatTotalTime(): string {
-    const total = this.recordedResults.reduce((acc, r) => acc + r.elapsedSeconds, 0);
-    const mins = Math.floor(total / 60);
-    const secs = total % 60;
-    return mins > 0 ? `${mins} min ${secs} s` : `${secs} segundos`;
-  }
-
   restartSession(): void {
     this.startSession();
   }
 
-  handleDashboardClose(event: MouseEvent): void {
-    this.showDashboard.set(false);
+  // Type guards para templates
+  asCalc(e: Exercise): CalcExercise {
+    return e as CalcExercise;
+  }
+  asSeries(e: Exercise): SeriesExercise {
+    return e as SeriesExercise;
+  }
+  asCoords(e: Exercise): CoordsExercise {
+    return e as CoordsExercise;
   }
 }
