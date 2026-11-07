@@ -154,8 +154,8 @@ import { ParentDashboardComponent } from './components/parent-dashboard/parent-d
                 class="sudoku-cell"
                 [class.given]="asSudoku(currentExercise()).initialGiven[cellIdx]"
                 [class.selected]="selectedSudokuCell() === cellIdx"
-                [class.border-right]="cellIdx % 4 === 1"
-                [class.border-bottom]="cellIdx >= 4 && cellIdx <= 7"
+                [class.thick-border-right]="cellIdx % 4 === 1"
+                [class.thick-border-bottom]="cellIdx >= 4 && cellIdx <= 7"
                 (click)="selectSudokuCell(cellIdx)"
               >
                 {{ sudokuCurrentGrid()[cellIdx] || '' }}
@@ -515,40 +515,42 @@ import { ParentDashboardComponent } from './components/parent-dashboard/parent-d
       /* Sudoku 4x4 */
       .sudoku-board-4x4 {
         display: grid;
-        grid-template-columns: repeat(4, 56px);
-        grid-template-rows: repeat(4, 56px);
-        gap: 2px;
-        background: #475569;
-        padding: 4px;
-        border-radius: 12px;
+        grid-template-columns: repeat(4, 58px);
+        grid-template-rows: repeat(4, 58px);
+        background: #ffffff;
+        border: 3px solid #1e293b;
+        border-radius: 8px;
         margin: 0 auto 18px auto;
+        overflow: hidden;
       }
       .sudoku-cell {
         background: #ffffff;
+        border: 1px solid #cbd5e1;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.8rem;
+        font-size: 1.9rem;
         font-weight: 800;
         color: #2563eb;
         cursor: pointer;
         user-select: none;
+        box-sizing: border-box;
       }
       .sudoku-cell.given {
         color: #0f172a;
-        background: #f1f5f9;
+        background: #f8fafc;
         cursor: not-allowed;
       }
       .sudoku-cell.selected {
         background: #e0f2fe;
-        outline: 3px solid #0284c7;
+        outline: 2px solid #0284c7;
         z-index: 2;
       }
-      .sudoku-cell.border-right {
-        margin-right: 3px;
+      .sudoku-cell.thick-border-right {
+        border-right: 3px solid #1e293b;
       }
-      .sudoku-cell.border-bottom {
-        margin-bottom: 3px;
+      .sudoku-cell.thick-border-bottom {
+        border-bottom: 3px solid #1e293b;
       }
       .sudoku-keypad {
         display: flex;
