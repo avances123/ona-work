@@ -86,8 +86,8 @@ interface ExerciseDef {
     `
       :host {
         display: block;
-        width: 100vw;
-        height: 100vh;
+        width: 100%;
+        height: 100%;
         overflow: hidden;
         background: #f8fafc;
         font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -98,6 +98,7 @@ interface ExerciseDef {
         flex-direction: column;
         height: 100%;
         width: 100%;
+        overflow: hidden;
       }
       .top-bar {
         display: flex;
