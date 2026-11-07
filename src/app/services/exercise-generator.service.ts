@@ -5,6 +5,7 @@ import {
   Exercise,
   MosaicExercise,
   SeriesExercise,
+  SeriesItem,
   SudokuExercise,
 } from '../models/exercise.model';
 
@@ -12,7 +13,23 @@ import {
   providedIn: 'root',
 })
 export class ExerciseGeneratorService {
-  // Genera una tanda balanceada de N ejercicios rotando por los 5 bloques
+  private readonly shapes = ['●', '■', '▲', '★'];
+  private readonly shapeNames: Record<string, string> = {
+    '●': 'círculos',
+    '■': 'cuadrados',
+    '▲': 'triángulos',
+    '★': 'estrellas',
+  };
+
+  private readonly colors = [
+    { code: '#2563eb', name: 'azul' },
+    { code: '#dc2626', name: 'rojo' },
+    { code: '#16a34a', name: 'verde' },
+    { code: '#d97706', name: 'naranja' },
+    { code: '#9333ea', name: 'morado' },
+    { code: '#0f172a', name: 'negro' },
+  ];
+
   generateSession(count: number = 10): Exercise[] {
     const exercises: Exercise[] = [];
     const types: ('calc' | 'mosaic' | 'sudoku' | 'series' | 'coords')[] = [
@@ -49,27 +66,24 @@ export class ExerciseGeneratorService {
     return exercises;
   }
 
-  // 1. Cálculo: sumas (hasta 20), restas (hasta 10) o multiplicaciones (tablas 1 a 4)
+  // 1. Cálculo
   private generateCalc(id: string): CalcExercise {
-    const mode = Math.floor(Math.random() * 3); // 0: mult, 1: suma, 2: resta
+    const mode = Math.floor(Math.random() * 3);
     let opText = '';
     let correct = 0;
 
     if (mode === 0) {
-      // Multiplicación: tablas del 2, 3 y 4
       const a = 2 + Math.floor(Math.random() * 3); // 2, 3, 4
-      const b = 1 + Math.floor(Math.random() * 9); // 1 a 9
+      const b = 1 + Math.floor(Math.random() * 9);
       correct = a * b;
       opText = `${a} × ${b}`;
     } else if (mode === 1) {
-      // Suma hasta 20
       const a = 3 + Math.floor(Math.random() * 8);
       const b = 2 + Math.floor(Math.random() * 8);
       correct = a + b;
       opText = `${a} + ${b}`;
     } else {
-      // Resta hasta 10
-      const a = 5 + Math.floor(Math.random() * 6); // 5 a 10
+      const a = 5 + Math.floor(Math.random() * 6);
       const b = 1 + Math.floor(Math.random() * a);
       correct = a - b;
       opText = `${a} − ${b}`;
@@ -82,8 +96,6 @@ export class ExerciseGeneratorService {
       optionsSet.add(fake);
     }
 
-    const options = Array.from(optionsSet).sort(() => Math.random() - 0.5);
-
     return {
       id,
       type: 'calc',
@@ -91,13 +103,13 @@ export class ExerciseGeneratorService {
       instructions: 'Calcula el resultado:',
       operationText: opText,
       correctAnswer: correct,
-      options,
+      options: Array.from(optionsSet).sort(() => Math.random() - 0.5),
     };
   }
 
-  // 2. Mosaico 4x4 de memoria: 5 a 6 casillas negras sobre 16 posibles
+  // 2. Mosaico 4x4
   private generateMosaic(id: string): MosaicExercise {
-    const numCells = 5 + Math.floor(Math.random() * 2); // 5 o 6 casillas
+    const numCells = 5 + Math.floor(Math.random() * 2);
     const allIndices = Array.from({ length: 16 }, (_, i) => i).sort(() => Math.random() - 0.5);
     const targetCells = allIndices.slice(0, numCells).sort((a, b) => a - b);
 
@@ -112,42 +124,128 @@ export class ExerciseGeneratorService {
     };
   }
 
-  // 3. Series visuales: alternancia de forma y variación de cantidad
+  // 3. Series Visuales Procedurales con variación de forma, cantidad y color
   private generateSeries(id: string): SeriesExercise {
-    const shapes = ['■', '●', '▲'].sort(() => Math.random() - 0.5);
-    const shape1 = shapes[0];
-    const shape2 = shapes[1];
+    // Seleccionar 2 formas y 2 colores distintos
+    const chosenShapes = [...this.shapes].sort(() => Math.random() - 0.5).slice(0, 2);
+    const chosenColors = [...this.colors].sort(() => Math.random() - 0.5).slice(0, 2);
 
-    const sequence = [
-      { shape: shape1, count: 1 },
-      { shape: shape2, count: 1 },
-      { shape: shape1, count: 2 },
-      { shape: shape2, count: 2 },
-      { shape: shape1, count: 3 },
-    ];
+    const shapeA = chosenShapes[0];
+    const shapeB = chosenShapes[1];
+    const colorA = chosenColors[0];
+    const colorB = chosenColors[1];
 
-    const correctOption = { shape: shape2, count: 3 };
+    // Regla de cantidad:
+    // 0: Creciente clásica (1, 1, 2, 2, 3...)
+    // 1: Decreciente (4, 4, 3, 3, 2...)
+    // 2: Cíclica (1, 2, 1, 2, 1...)
+    // 3: Creciente rápida (1, 2, 3, 4, 5...)
+    const qtyPattern = Math.floor(Math.random() * 4);
 
-    const fakeOptions = [
-      { shape: shape1, count: 3 },
-      { shape: shape2, count: 2 },
-    ];
+    let getCountAt = (stepIndex: number): number => {
+      switch (qtyPattern) {
+        case 0: // Creciente en parejas: 1, 1, 2, 2, 3 -> ? 3
+          return Math.floor(stepIndex / 2) + 1;
+        case 1: // Decreciente en parejas: 4, 4, 3, 3, 2 -> ? 2
+          return Math.max(1, 4 - Math.floor(stepIndex / 2));
+        case 2: // Cíclico alterno: 1, 2, 1, 2, 1 -> ? 2
+          return (stepIndex % 2) + 1;
+        case 3: // Creciente directo: 1, 2, 3, 4 -> ? 5
+          return stepIndex + 1;
+        default:
+          return Math.floor(stepIndex / 2) + 1;
+      }
+    };
 
-    const options = [correctOption, ...fakeOptions].sort(() => Math.random() - 0.5);
+    // Regla de color y forma:
+    // 0: Forma y color cambian juntos (shapeA+colorA, shapeB+colorB)
+    // 1: Forma constante, cambia color y cantidad (shapeA+colorA, shapeA+colorB...)
+    // 2: Color constante, cambian formas y cantidad
+    const traitMode = Math.floor(Math.random() * 3);
+
+    const getItemAt = (idx: number): SeriesItem => {
+      const count = getCountAt(idx);
+      if (traitMode === 0) {
+        // Alternan forma y color a la vez
+        const isB = idx % 2 === 1;
+        return {
+          shape: isB ? shapeB : shapeA,
+          count,
+          color: isB ? colorB.code : colorA.code,
+          colorName: isB ? colorB.name : colorA.name,
+        };
+      } else if (traitMode === 1) {
+        // Misma forma, alternan colores
+        const isB = idx % 2 === 1;
+        return {
+          shape: shapeA,
+          count,
+          color: isB ? colorB.code : colorA.code,
+          colorName: isB ? colorB.name : colorA.name,
+        };
+      } else {
+        // Mismo color, alternan formas
+        const isB = idx % 2 === 1;
+        return {
+          shape: isB ? shapeB : shapeA,
+          count,
+          color: colorA.code,
+          colorName: colorA.name,
+        };
+      }
+    };
+
+    // Longitud visible de la serie antes de la incógnita: 4 o 5 elementos
+    const visibleLength = 4;
+    const sequence: SeriesItem[] = [];
+    for (let i = 0; i < visibleLength; i++) {
+      sequence.push(getItemAt(i));
+    }
+
+    // Elemento correcto siguiente (índice visibleLength)
+    const correctOption = getItemAt(visibleLength);
+
+    // Opciones distractoras
+    // Distractor 1: Forma o color equivocado
+    const fake1: SeriesItem = {
+      shape: correctOption.shape === shapeA ? shapeB : shapeA,
+      count: correctOption.count,
+      color: correctOption.color === colorA.code ? colorB.code : colorA.code,
+      colorName: correctOption.colorName === colorA.name ? colorB.name : colorA.name,
+    };
+
+    // Distractor 2: Cantidad errónea (+1 o -1)
+    const fake2: SeriesItem = {
+      shape: correctOption.shape,
+      count: Math.max(1, correctOption.count + (correctOption.count > 1 ? -1 : 1)),
+      color: correctOption.color,
+      colorName: correctOption.colorName,
+    };
+
+    const options = [correctOption, fake1, fake2].sort(() => Math.random() - 0.5);
+
+    let hint = '';
+    if (traitMode === 0) {
+      hint = `Fíjate en cómo alternan la figura y el color, y cómo varía la cantidad.`;
+    } else if (traitMode === 1) {
+      hint = `La figura es siempre la misma; fíjate en el cambio de color y en la cantidad.`;
+    } else {
+      hint = `El color no cambia; observa cómo cambian la figura y el número de elementos.`;
+    }
 
     return {
       id,
       type: 'series',
       title: 'Series Visuales',
-      instructions: '¿Qué figura y cantidad continúa la serie?',
+      instructions: '¿Qué figura, color y cantidad continúa la serie?',
       sequence,
       correctOption,
       options,
-      ruleHint: `Fíjate en cómo alternan ${shape1} y ${shape2}, y cómo aumentan en parejas.`,
+      ruleHint: hint,
     };
   }
 
-  // 4. Coordenadas 8x8 de ajedrez (a-h, 1-8)
+  // 4. Coordenadas 8x8
   private generateCoords(id: string): CoordsExercise {
     const cols = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
     const col = cols[Math.floor(Math.random() * cols.length)];
@@ -163,7 +261,7 @@ export class ExerciseGeneratorService {
     };
   }
 
-  // 5. Sudoku 4x4 procedural
+  // 5. Sudoku 4x4
   private generateSudoku(id: string): SudokuExercise {
     const base = [
       [1, 2, 3, 4],
@@ -189,7 +287,6 @@ export class ExerciseGeneratorService {
       }
     }
 
-    // 7 u 8 pistas dadas
     const numGiven = 7 + Math.floor(Math.random() * 2);
     const indices = Array.from({ length: 16 }, (_, i) => i).sort(() => Math.random() - 0.5);
     const givenIndices = new Set(indices.slice(0, numGiven));

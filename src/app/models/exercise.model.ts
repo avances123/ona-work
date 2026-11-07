@@ -22,11 +22,18 @@ export interface MosaicExercise extends BaseExercise {
   memorizeSeconds: number; // 5 seconds
 }
 
+export interface SeriesItem {
+  shape: string; // 'circle' | 'square' | 'triangle' | 'star'
+  count: number;
+  color: string; // '#2563eb' (azul), '#dc2626' (rojo), '#16a34a' (verde), '#d97706' (ámbar), '#0f172a' (negro)
+  colorName?: string;
+}
+
 export interface SeriesExercise extends BaseExercise {
   type: 'series';
-  sequence: { shape: string; count: number }[];
-  correctOption: { shape: string; count: number };
-  options: { shape: string; count: number }[];
+  sequence: SeriesItem[];
+  correctOption: SeriesItem;
+  options: SeriesItem[];
   ruleHint?: string;
 }
 

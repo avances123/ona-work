@@ -9,6 +9,7 @@ import {
   Exercise,
   MosaicExercise,
   SeriesExercise,
+  SeriesItem,
   SudokuExercise,
 } from './models/exercise.model';
 import { ExerciseResult, SessionRecord } from './models/session.model';
@@ -99,7 +100,7 @@ import { ParentDashboardComponent } from './components/parent-dashboard/parent-d
                 *ngFor="let item of asSeries(currentExercise()).sequence; let last = last"
                 class="series-item"
               >
-                <span class="shape-symbol">{{ repeatShape(item.shape, item.count) }}</span>
+                <span class="shape-symbol" [style.color]="item.color">{{ repeatShape(item.shape, item.count) }}</span>
                 <span *ngIf="!last" class="series-sep">|</span>
               </div>
               <span class="series-sep">|</span>
@@ -116,7 +117,7 @@ import { ParentDashboardComponent } from './components/parent-dashboard/parent-d
                 class="series-option-btn"
                 (click)="onSeriesAnswer(opt)"
               >
-                {{ repeatShape(opt.shape, opt.count) }}
+                <span [style.color]="opt.color">{{ repeatShape(opt.shape, opt.count) }}</span>
               </button>
             </div>
           </div>
@@ -844,11 +845,12 @@ export class App implements OnInit, OnDestroy {
   }
 
   // --- Series ---
-  onSeriesAnswer(selected: { shape: string; count: number }): void {
+  onSeriesAnswer(selected: SeriesItem): void {
     const current = this.currentExercise() as SeriesExercise;
     const isCorrect =
       selected.shape === current.correctOption.shape &&
-      selected.count === current.correctOption.count;
+      selected.count === current.correctOption.count &&
+      selected.color === current.correctOption.color;
 
     if (isCorrect) {
       this.handleExerciseSuccess();
