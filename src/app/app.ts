@@ -30,10 +30,6 @@ interface ExerciseDef {
           </div>
         </div>
 
-        <div class="timer-display">
-          ⏱️ {{ timer.elapsedSeconds() }}s
-        </div>
-
         <button
           class="secret-dashboard-btn"
           title="Vista Papá (Control)"
@@ -63,10 +59,7 @@ interface ExerciseDef {
           <div class="finished-card">
             <div class="star-icon">⭐</div>
             <h2>¡Sesión completada, Ona!</h2>
-            <p>Has completado todos los ejercicios con concentración.</p>
-            <div class="session-summary-box">
-              <p>Tiempo de foco total: <strong>{{ formatTotalTime() }}</strong></p>
-            </div>
+            <p>Has completado todos los ejercicios con mucha concentración.</p>
             <button class="restart-btn" (click)="restartSession()">Hacer otra tanda</button>
           </div>
         </ng-template>
