@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import {
   CalcExercise,
   CoordsExercise,
+  CryptoExercise,
   Exercise,
   ExerciseType,
   MosaicExercise,
@@ -35,7 +36,7 @@ export class ExerciseGeneratorService {
     const exercises: Exercise[] = [];
     const availableTypes = (enabledTypes && enabledTypes.length > 0)
       ? enabledTypes
-      : (['calc', 'mosaic', 'sudoku', 'series', 'coords'] as ExerciseType[]);
+      : (['calc', 'mosaic', 'sudoku', 'series', 'coords', 'crypto'] as ExerciseType[]);
 
     for (let i = 0; i < count; i++) {
       const type = availableTypes[i % availableTypes.length];
@@ -56,6 +57,9 @@ export class ExerciseGeneratorService {
           break;
         case 'sudoku':
           exercises.push(this.generateSudoku(id));
+          break;
+        case 'crypto':
+          exercises.push(this.generateCrypto(id));
           break;
       }
     }
@@ -258,7 +262,61 @@ export class ExerciseGeneratorService {
     };
   }
 
-  // 5. Sudoku 4x4 con garantía matemática de solución única
+  // 6. Criptograma numérico / Código secreto
+  private generateCrypto(id: string): CryptoExercise {
+    const symbolsPool = ['★', '▲', '●', '■', '◆', '✦'].sort(() => Math.random() - 0.5);
+    const chosen = symbolsPool.slice(0, 3);
+
+    // Asignar valores numéricos únicos a los 3 símbolos (1 a 9)
+    const valuesPool = [1, 2, 3, 4, 5, 6, 7, 8, 9].sort(() => Math.random() - 0.5);
+    const codeTable = [
+      { symbol: chosen[0], value: valuesPool[0] },
+      { symbol: chosen[1], value: valuesPool[1] },
+      { symbol: chosen[2], value: valuesPool[2] },
+    ];
+
+    // Operación: puede ser símbolo + símbolo o símbolo - símbolo o símbolo × símbolo
+    const opType = Math.floor(Math.random() * 3); // 0: suma, 1: resta, 2: mult
+    let s1 = codeTable[0];
+    let s2 = codeTable[1];
+    let opSymbol = '+';
+    let correct = 0;
+
+    if (opType === 0) {
+      opSymbol = '+';
+      correct = s1.value + s2.value;
+    } else if (opType === 1) {
+      opSymbol = '−';
+      if (s1.value < s2.value) {
+        [s1, s2] = [s2, s1];
+      }
+      correct = s1.value - s2.value;
+    } else {
+      // Multiplicación acotada (ej. factores de 2 a 4)
+      opSymbol = '×';
+      s1.value = 2 + Math.floor(Math.random() * 3);
+      s2.value = 1 + Math.floor(Math.random() * 5);
+      correct = s1.value * s2.value;
+    }
+
+    const optionsSet = new Set<number>([correct]);
+    while (optionsSet.size < 3) {
+      const delta = (Math.random() > 0.5 ? 1 : -1) * (1 + Math.floor(Math.random() * 3));
+      const fake = Math.max(0, correct + delta);
+      optionsSet.add(fake);
+    }
+
+    return {
+      id,
+      type: 'crypto',
+      title: 'Código Secreto',
+      instructions: 'Consulta la tabla y descifra la operación:',
+      codeTable,
+      expressionSymbols: [s1.symbol, opSymbol, s2.symbol],
+      correctAnswer: correct,
+      options: Array.from(optionsSet).sort(() => Math.random() - 0.5),
+    };
+  }
   private generateSudoku(id: string): SudokuExercise {
     const base = [
       [1, 2, 3, 4],

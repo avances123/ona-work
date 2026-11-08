@@ -6,6 +6,7 @@ import { ExerciseGeneratorService } from './services/exercise-generator.service'
 import {
   CalcExercise,
   CoordsExercise,
+  CryptoExercise,
   Exercise,
   MosaicExercise,
   SeriesExercise,
@@ -168,6 +169,40 @@ import { ParentDashboardComponent } from './components/parent-dashboard/parent-d
             </div>
 
             <button class="check-btn" (click)="onSudokuSubmit()">Comprobar Sudoku</button>
+          </div>
+
+          <!-- 6. BLOQUE CRIPTOGRAMA / CÓDIGO SECRETO -->
+          <div *ngIf="currentExercise().type === 'crypto'" class="crypto-block">
+            <!-- Tabla de correspondencia de símbolos -->
+            <div class="code-table">
+              <div *ngFor="let item of asCrypto(currentExercise()).codeTable" class="code-pair">
+                <span class="code-sym">{{ item.symbol }}</span>
+                <span class="code-eq">=</span>
+                <span class="code-val">{{ item.value }}</span>
+              </div>
+            </div>
+
+            <!-- Operación cifrada -->
+            <div class="crypto-expression">
+              <span class="crypto-expr-sym">{{ asCrypto(currentExercise()).expressionSymbols[0] }}</span>
+              <span class="crypto-expr-op">{{ asCrypto(currentExercise()).expressionSymbols[1] }}</span>
+              <span class="crypto-expr-sym">{{ asCrypto(currentExercise()).expressionSymbols[2] }}</span>
+              <span class="crypto-expr-op">=</span>
+              <span class="crypto-expr-unknown">?</span>
+            </div>
+
+            <!-- Opciones de respuesta -->
+            <div class="options-grid">
+              <button
+                *ngFor="let opt of asCrypto(currentExercise()).options"
+                class="option-btn"
+                [disabled]="opt === asCrypto(currentExercise()).discardedOption"
+                [class.discarded]="opt === asCrypto(currentExercise()).discardedOption"
+                (click)="onCryptoAnswer(opt)"
+              >
+                {{ opt }}
+              </button>
+            </div>
           </div>
 
           <!-- Feedback de error suave socrático -->
@@ -576,6 +611,52 @@ import { ParentDashboardComponent } from './components/parent-dashboard/parent-d
         color: #dc2626;
       }
 
+      /* Criptograma */
+      .code-table {
+        display: flex;
+        gap: 20px;
+        justify-content: center;
+        background: #f1f5f9;
+        border: 2px dashed #94a3b8;
+        border-radius: 16px;
+        padding: 12px 24px;
+        margin-bottom: 24px;
+      }
+      .code-pair {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 1.6rem;
+        font-weight: 800;
+      }
+      .code-sym {
+        color: #2563eb;
+      }
+      .code-eq {
+        color: #64748b;
+      }
+      .code-val {
+        color: #0f172a;
+      }
+      .crypto-expression {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        font-size: 3rem;
+        font-weight: 800;
+        margin-bottom: 28px;
+      }
+      .crypto-expr-sym {
+        color: #2563eb;
+      }
+      .crypto-expr-op {
+        color: #475569;
+      }
+      .crypto-expr-unknown {
+        color: #0284c7;
+      }
+
       .error-notice {
         margin-top: 16px;
         color: #b45309;
@@ -851,6 +932,23 @@ export class App implements OnInit, OnDestroy {
     }
   }
 
+  // --- Criptogramas / Códigos Secretos ---
+  onCryptoAnswer(selected: number): void {
+    const current = this.currentExercise() as CryptoExercise;
+    if (selected === current.correctAnswer) {
+      this.handleExerciseSuccess();
+    } else {
+      this.currentAttempts.update((a) => a + 1);
+      this.socraticFeedback.set(true);
+      const wrongOptions = current.options.filter(
+        (opt) => opt !== current.correctAnswer && opt !== current.discardedOption
+      );
+      if (wrongOptions.length > 0) {
+        current.discardedOption = wrongOptions[0];
+      }
+    }
+  }
+
   // --- Series ---
   onSeriesAnswer(selected: SeriesItem): void {
     const current = this.currentExercise() as SeriesExercise;
@@ -967,5 +1065,8 @@ export class App implements OnInit, OnDestroy {
   }
   asSudoku(e: Exercise): SudokuExercise {
     return e as SudokuExercise;
+  }
+  asCrypto(e: Exercise): CryptoExercise {
+    return e as CryptoExercise;
   }
 }

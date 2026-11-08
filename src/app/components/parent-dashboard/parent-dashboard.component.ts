@@ -362,6 +362,7 @@ export class ParentDashboardComponent {
     { id: 'sudoku', label: 'Sudokus 4×4' },
     { id: 'series', label: 'Series Visuales' },
     { id: 'coords', label: 'Coordenadas' },
+    { id: 'crypto', label: 'Criptogramas' },
   ];
 
   public totalSessions = computed(() => this.sessions().length);

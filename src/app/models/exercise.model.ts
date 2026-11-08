@@ -1,4 +1,4 @@
-export type ExerciseType = 'calc' | 'mosaic' | 'series' | 'coords' | 'sudoku';
+export type ExerciseType = 'calc' | 'mosaic' | 'series' | 'coords' | 'sudoku' | 'crypto';
 
 export interface BaseExercise {
   id: string;
@@ -53,10 +53,20 @@ export interface SudokuExercise extends BaseExercise {
   highlightedCol?: number;
 }
 
+export interface CryptoExercise extends BaseExercise {
+  type: 'crypto';
+  codeTable: { symbol: string; value: number }[]; // Ej: [{symbol: '★', value: 3}, {symbol: '▲', value: 5}]
+  expressionSymbols: string[]; // Ej: ['★', '+', '▲']
+  correctAnswer: number;
+  options: number[];
+  discardedOption?: number;
+}
+
 export type Exercise =
   | CalcExercise
   | MosaicExercise
   | SeriesExercise
   | CoordsExercise
-  | SudokuExercise;
+  | SudokuExercise
+  | CryptoExercise;
 

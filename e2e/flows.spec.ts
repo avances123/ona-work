@@ -78,4 +78,71 @@ test.describe('Ona Work - Flujos E2E y Modo Papá', () => {
     // La barra debe indicar "de 5"
     await expect(page.locator('.exercise-indicator')).toContainText('de 5');
   });
+
+  test('Flujo completo de Criptograma (código secreto) con tabla y pistas socráticas', async ({ page }) => {
+    await page.goto('/');
+
+    // 1. Abrir panel con Alt+P
+    await page.keyboard.press('Alt+KeyP');
+    await expect(page.locator('.dashboard-modal')).toBeVisible();
+
+    // 2. Dejar únicamente marcado Criptogramas
+    const checkboxes = page.locator('.type-checkbox-label input[type="checkbox"]');
+    const count = await checkboxes.count();
+    for (let i = 0; i < count; i++) {
+      const box = checkboxes.nth(i);
+      const isChecked = await box.isChecked();
+      const label = await page.locator('.type-checkbox-label').nth(i).innerText();
+      if (!label.includes('Criptogramas') && isChecked) {
+        await box.click();
+      } else if (label.includes('Criptogramas') && !isChecked) {
+        await box.click();
+      }
+    }
+
+    // 3. Reiniciar sesión
+    await page.locator('button.restart-session-btn').click();
+    await expect(page.locator('.dashboard-modal')).not.toBeVisible();
+
+    // 4. Verificar que se renderiza el ejercicio de Código Secreto
+    await expect(page.locator('.exercise-type-tag')).toContainText('Código Secreto');
+    await expect(page.locator('.code-table')).toBeVisible();
+    await expect(page.locator('.code-pair')).toHaveCount(3); // 3 pares de clave/valor
+    await expect(page.locator('.crypto-expression')).toBeVisible();
+
+    // 5. Debe haber 3 opciones de respuesta numéricas
+    const optionBtns = page.locator('.crypto-block .option-btn');
+    await expect(optionBtns).toHaveCount(3);
+
+    // Leer los valores de los botones
+    const val0 = await optionBtns.nth(0).innerText();
+    const val1 = await optionBtns.nth(1).innerText();
+    const val2 = await optionBtns.nth(2).innerText();
+
+    // 6. Probar feedback socrático pulsando una opción: si falla, una opción incorrecta queda deshabilitada
+    // Pulsamos la primera opción
+    await optionBtns.nth(0).click();
+
+    // Si acertó a la primera o falló, comprobamos el estado
+    const socraticFeedback = page.locator('.socratic-feedback');
+    const isError = await socraticFeedback.isVisible();
+    if (isError) {
+      // Debe haber deshabilitado una de las opciones erróneas
+      const disabledCount = await page.locator('.crypto-block .option-btn:disabled').count();
+      expect(disabledCount).toBeGreaterThanOrEqual(1);
+
+      // Ahora pulsamos una opción habilitada restante
+      const enabledBtns = page.locator('.crypto-block .option-btn:not(:disabled)');
+      const remainingCount = await enabledBtns.count();
+      for (let i = 0; i < remainingCount; i++) {
+        await enabledBtns.nth(0).click();
+        const stillError = await page.locator('.socratic-feedback').isVisible();
+        if (!stillError) break;
+      }
+    }
+
+    // El ejercicio avanza o muestra éxito
+    const indicator = page.locator('.exercise-indicator');
+    await expect(indicator).toBeVisible();
+  });
 });
