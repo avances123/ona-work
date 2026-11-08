@@ -28,6 +28,19 @@ import { ExerciseType } from '../../models/exercise.model';
 
         <!-- Configuración de tipos de ejercicios para las sesiones -->
         <section class="exercise-types-config">
+          <div class="count-config-row">
+            <label for="exerciseCount" class="count-label">Número de ejercicios por sesión:</label>
+            <input
+              id="exerciseCount"
+              type="number"
+              min="1"
+              max="50"
+              class="exercise-count-input"
+              [value]="exerciseCount()"
+              (change)="onCountChange($event)"
+            />
+          </div>
+
           <h3>Tipos de Ejercicios en Sesiones</h3>
           <p class="config-desc">Selecciona los bloques que quieres que se generen en las tandas:</p>
           <div class="types-grid">
@@ -151,6 +164,31 @@ import { ExerciseType } from '../../models/exercise.model';
         padding: 16px 24px;
         background: #f1f5f9;
         border-bottom: 1px solid #e2e8f0;
+      }
+      .count-config-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+        background: #ffffff;
+        padding: 10px 14px;
+        border-radius: 8px;
+        border: 1px solid #cbd5e1;
+      }
+      .count-label {
+        font-weight: 700;
+        font-size: 0.95rem;
+        color: #1e293b;
+      }
+      .exercise-count-input {
+        width: 70px;
+        padding: 6px 10px;
+        font-size: 1.1rem;
+        font-weight: 800;
+        text-align: center;
+        border: 2px solid #94a3b8;
+        border-radius: 6px;
+        color: #0f172a;
       }
       .exercise-types-config h3 {
         margin: 0 0 4px 0;
@@ -316,6 +354,7 @@ export class ParentDashboardComponent {
   private readonly storage = inject(StorageService);
   public readonly sessions = this.storage.sessions;
   public readonly enabledTypes = this.storage.enabledTypes;
+  public readonly exerciseCount = this.storage.exerciseCount;
 
   public readonly availableExerciseTypes: { id: ExerciseType; label: string }[] = [
     { id: 'calc', label: 'Cálculo' },
@@ -334,6 +373,14 @@ export class ParentDashboardComponent {
   public readonly closed = output<void>();
   public readonly restartRequested = output<void>();
   public readonly continueRequested = output<void>();
+
+  onCountChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const val = parseInt(input.value, 10);
+    if (!isNaN(val) && val > 0) {
+      this.storage.saveExerciseCount(val);
+    }
+  }
 
   continueSession(): void {
     this.continueRequested.emit();

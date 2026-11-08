@@ -23,7 +23,12 @@ test.describe('Ona Work - Flujos E2E y Modo Papá', () => {
     await expect(continueBtn).toContainText('Continuar Sesión');
     await expect(clearBtn).toBeVisible();
 
-    // 4. Cerrar con Escape o botón cerrar
+    // 4. Verificar configuración de número de ejercicios por sesión
+    const countInput = page.locator('input.exercise-count-input');
+    await expect(countInput).toBeVisible();
+    await expect(countInput).toHaveValue('10');
+
+    // 5. Cerrar con el botón cerrar
     await page.locator('.close-btn').click();
     await expect(page.locator('.dashboard-modal')).not.toBeVisible();
   });
@@ -53,5 +58,24 @@ test.describe('Ona Work - Flujos E2E y Modo Papá', () => {
 
     // El ejercicio actual debe ser de tipo cálculo
     await expect(page.locator('.exercise-type-tag')).toContainText('Cálculo');
+  });
+
+  test('Cambiar el número de ejercicios por sesión se aplica al reiniciar', async ({ page }) => {
+    await page.goto('/');
+
+    // Abrir panel con Alt+P
+    await page.keyboard.press('Alt+KeyP');
+    await expect(page.locator('.dashboard-modal')).toBeVisible();
+
+    // Cambiar el contador a 5 ejercicios
+    const countInput = page.locator('input.exercise-count-input');
+    await countInput.fill('5');
+
+    // Pulsar Reiniciar Sesión
+    await page.locator('button.restart-session-btn').click();
+    await expect(page.locator('.dashboard-modal')).not.toBeVisible();
+
+    // La barra debe indicar "de 5"
+    await expect(page.locator('.exercise-indicator')).toContainText('de 5');
   });
 });
