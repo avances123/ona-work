@@ -762,7 +762,7 @@ export class App implements OnInit, OnDestroy {
   // Mosaico 4x4 (16 celdas: 0 a 15)
   public readonly mosaicCells16 = Array.from({ length: 16 }, (_, i) => i);
   public readonly mosaicPhase = signal<'memorize' | 'recall'>('memorize');
-  public readonly memorizeCountdown = signal<number>(5);
+  public readonly memorizeCountdown = signal<number>(10);
   public readonly selectedCells = signal<number[]>([]);
   public readonly isFlashingHint = signal<boolean>(false);
   private mosaicCountdownInterval: any = null;
@@ -839,7 +839,7 @@ export class App implements OnInit, OnDestroy {
   // --- Mosaico 4x4 ---
   private startMosaicMemorizePhase(): void {
     this.mosaicPhase.set('memorize');
-    this.memorizeCountdown.set(5);
+    this.memorizeCountdown.set(10);
 
     if (this.mosaicCountdownInterval) {
       clearInterval(this.mosaicCountdownInterval);

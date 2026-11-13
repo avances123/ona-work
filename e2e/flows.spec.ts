@@ -145,4 +145,36 @@ test.describe('Ona Work - Flujos E2E y Modo Papá', () => {
     const indicator = page.locator('.exercise-indicator');
     await expect(indicator).toBeVisible();
   });
+
+  test('La cuenta atrás de memorización en mosaicos es de 10 segundos', async ({ page }) => {
+    await page.goto('/');
+
+    // 1. Abrir panel con Alt+P
+    await page.keyboard.press('Alt+KeyP');
+    await expect(page.locator('.dashboard-modal')).toBeVisible();
+
+    // 2. Dejar únicamente marcado Mosaicos
+    const checkboxes = page.locator('.type-checkbox-label input[type="checkbox"]');
+    const count = await checkboxes.count();
+    for (let i = 0; i < count; i++) {
+      const box = checkboxes.nth(i);
+      const isChecked = await box.isChecked();
+      const label = await page.locator('.type-checkbox-label').nth(i).innerText();
+      if (!label.includes('Mosaicos') && isChecked) {
+        await box.click();
+      } else if (label.includes('Mosaicos') && !isChecked) {
+        await box.click();
+      }
+    }
+
+    // 3. Reiniciar sesión
+    await page.locator('button.restart-session-btn').click();
+    await expect(page.locator('.dashboard-modal')).not.toBeVisible();
+
+    // 4. Verificar que está en fase de memorización y el contador inicia en 10s (o 9s si ha corrido 1 tick)
+    const countdown = page.locator('.mosaic-countdown');
+    await expect(countdown).toBeVisible();
+    const text = await countdown.innerText();
+    expect(text).toMatch(/Memoriza: (10|9)s/);
+  });
 });

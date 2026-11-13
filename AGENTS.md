@@ -3,7 +3,7 @@
 ## Directrices de Desarrollo y Verificación
 
 ### Arranque local y pruebas E2E con Playwright
-- **Servidor local:** La aplicación se arranca en local mediante `npm start` (escucha en `http://localhost:4200/`).
+- **Servidor local:** La aplicación se arranca en local mediante `npm start` (escucha en `http://localhost:4300/`).
 - **Pruebas End-to-End (E2E):** Toda funcionalidad o modificación de flujo en los ejercicios debe verificarse obligatoriamente ejecutando los tests de Playwright:
   ```bash
   npm run test:e2e

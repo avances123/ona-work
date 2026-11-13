@@ -8,12 +8,12 @@ export default defineConfig({
   workers: 1,
   reporter: 'list',
   use: {
-    baseURL: 'http://localhost:4200',
+    baseURL: 'http://localhost:4300',
     trace: 'on-first-retry',
   },
   webServer: {
     command: 'npm start',
-    url: 'http://localhost:4200',
+    url: 'http://localhost:4300',
     reuseExistingServer: !process.env['CI'],
     timeout: 120 * 1000,
   },
