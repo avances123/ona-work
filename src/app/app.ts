@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FocusTimerService } from './services/focus-timer.service';
 import { StorageService } from './services/storage.service';
 import { ExerciseGeneratorService } from './services/exercise-generator.service';
+import { VocabAiService } from './services/vocab-ai.service';
 import {
   CalcExercise,
   CoordsExercise,
@@ -248,12 +249,15 @@ import { normalizeVocabWord } from './data/vocab-definitions';
             >
               <span class="vocab-popup-word">«{{ selectedWord }}»</span>
               <button
-                *ngIf="!vocabPopupSaved()"
+                *ngIf="!vocabPopupSaved() && !vocabPopupLoading()"
                 class="vocab-add-btn"
                 (click)="onLearnSelectedWord()"
               >
                 Acabo de aprender esta palabra
               </button>
+              <span *ngIf="vocabPopupLoading()" class="vocab-saved-badge">
+                ⏳ Buscando definición...
+              </span>
               <span *ngIf="vocabPopupSaved()" class="vocab-saved-badge">
                 ✓ Añadida a Vocabulario
               </span>
@@ -846,6 +850,7 @@ export class App implements OnInit, OnDestroy {
   public readonly timer = inject(FocusTimerService);
   private readonly storage = inject(StorageService);
   private readonly generator = inject(ExerciseGeneratorService);
+  private readonly vocabAi = inject(VocabAiService);
 
   public readonly showDashboard = signal<boolean>(false);
   private windowKeydownListener = (e: KeyboardEvent) => this.handleGlobalKeydown(e);
@@ -891,6 +896,7 @@ export class App implements OnInit, OnDestroy {
 
   // Vocabulario (captura desde relatos)
   public readonly vocabPopupWord = signal<string | null>(null);
+  public readonly vocabPopupLoading = signal<boolean>(false);
   public readonly vocabPopupSaved = signal<boolean>(false);
   public readonly vocabPopupPos = signal<{ top: number; left: number }>({ top: 160, left: 200 });
   private vocabPopupTimer: any = null;
@@ -1280,17 +1286,26 @@ export class App implements OnInit, OnDestroy {
       this.vocabPopupTimer = null;
     }
     this.vocabPopupWord.set(cleaned);
+    this.vocabPopupLoading.set(false);
     this.vocabPopupSaved.set(false);
     this.vocabPopupPos.set({ top, left });
   }
 
-  onLearnSelectedWord(): void {
+  async onLearnSelectedWord(): Promise<void> {
     const word = this.vocabPopupWord();
-    if (!word) return;
+    if (!word || this.vocabPopupLoading()) return;
 
     this.storage.addVocabWord(word);
-    this.vocabPopupSaved.set(true);
+    this.vocabPopupLoading.set(true);
     window.getSelection()?.removeAllRanges();
+
+    const aiResult = await this.vocabAi.fetchDefinitions(word);
+    if (aiResult) {
+      this.storage.setVocabDefinitions(word, aiResult.correct, aiResult.distractors);
+    }
+
+    this.vocabPopupLoading.set(false);
+    this.vocabPopupSaved.set(true);
 
     if (this.vocabPopupTimer) clearTimeout(this.vocabPopupTimer);
     this.vocabPopupTimer = setTimeout(() => {
@@ -1304,6 +1319,7 @@ export class App implements OnInit, OnDestroy {
       this.vocabPopupTimer = null;
     }
     this.vocabPopupWord.set(null);
+    this.vocabPopupLoading.set(false);
     this.vocabPopupSaved.set(false);
   }
 

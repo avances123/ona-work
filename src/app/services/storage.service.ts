@@ -15,6 +15,7 @@ export interface VocabWordEntry {
   word: string;
   displayWord: string;
   definition?: string;
+  distractors?: string[];
   streak: number;
   addedAt: string;
 }
@@ -244,6 +245,25 @@ export class StorageService {
     this.persistVocabWords(
       this.vocabWordsSignal().map((w) =>
         w.word === normalized ? { ...w, definition: trimmed || undefined } : w
+      )
+    );
+  }
+
+  setVocabDefinitions(word: string, definition: string, distractors?: string[]): void {
+    const normalized = normalizeVocabWord(word);
+    const trimmed = definition.trim();
+    if (!trimmed) return;
+    const cleanDistractors = distractors?.map((d) => d.trim()).filter((d) => d.length > 0 && d !== trimmed);
+
+    this.persistVocabWords(
+      this.vocabWordsSignal().map((w) =>
+        w.word === normalized
+          ? {
+              ...w,
+              definition: trimmed,
+              distractors: cleanDistractors && cleanDistractors.length >= 2 ? cleanDistractors.slice(0, 2) : w.distractors,
+            }
+          : w
       )
     );
   }

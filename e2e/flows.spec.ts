@@ -318,6 +318,18 @@ test.describe('Ona Work - Flujos E2E y Modo Papá', () => {
   });
 
   test('Vocabulario: captura palabra única en relato, 3 definiciones, y se elimina tras 3 aciertos seguidos', async ({ page }) => {
+    // Interceptar LLM gratuito para test determinista sin depender de rate-limit ni red
+    await page.route('https://text.pollinations.ai/**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/plain; charset=utf-8',
+        body: JSON.stringify({
+          correct: 'Tira de tela que se ata en la cintura.',
+          distractors: ['Plato muy caliente de sopa.', 'Animal volador con plumas.'],
+        }),
+      });
+    });
+
     await page.goto('/');
 
     // 1. Sin palabras guardadas, aunque solo esté marcado Vocabulario no debe salir Vocabulario
@@ -410,7 +422,9 @@ test.describe('Ona Work - Flujos E2E y Modo Papá', () => {
       await expect(page.locator('.vocab-word-text')).toHaveText('cinturón');
       await expect(page.locator('.vocab-streak-pill')).toContainText(`Racha: ${step} / 3`);
       await expect(page.locator('.vocab-option-btn')).toHaveCount(3);
-      await page.locator('.vocab-option-btn', { hasText: 'cintura' }).click();
+      await expect(page.locator('.vocab-options')).toContainText('Plato muy caliente de sopa.');
+      await expect(page.locator('.vocab-options')).toContainText('Animal volador con plumas.');
+      await page.locator('.vocab-option-btn', { hasText: 'Tira de tela' }).click();
     }
 
     // 5. Sesión completada y palabra eliminada del listado (aprendida)

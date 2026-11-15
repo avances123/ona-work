@@ -1,6 +1,7 @@
 import { Component, computed, inject, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { StorageService } from '../../services/storage.service';
+import { VocabAiService } from '../../services/vocab-ai.service';
 import { ExerciseType } from '../../models/exercise.model';
 import { findVocabDefinition } from '../../data/vocab-definitions';
 
@@ -65,15 +66,22 @@ import { findVocabDefinition } from '../../data/vocab-definitions';
             <div class="vocab-item-top">
               <strong>{{ w.displayWord }}</strong>
               <span class="vocab-streak-badge">Racha: {{ w.streak }}/3</span>
+              <button
+                *ngIf="!getVocabDefPreview(w.word, w.definition)"
+                class="vocab-ai-btn"
+                [disabled]="loadingVocabWord() === w.word"
+                (click)="retryVocabAi(w.word)"
+              >
+                {{ loadingVocabWord() === w.word ? 'Buscando...' : '✨ Generar IA' }}
+              </button>
               <button class="vocab-del-btn" (click)="removeVocab(w.word)" title="Eliminar palabra">✕</button>
             </div>
-            <input
-              type="text"
-              class="vocab-def-input"
-              [value]="getVocabDefPreview(w.word, w.definition)"
-              placeholder="Añade una definición corta para esta palabra..."
-              (change)="onVocabDefChange(w.word, $event)"
-            />
+            <div class="vocab-def-preview" *ngIf="getVocabDefPreview(w.word, w.definition) as def; else missingDef">
+              {{ def }}
+            </div>
+            <ng-template #missingDef>
+              <div class="vocab-def-missing">Pendiente de definición (pulsa ✨ Generar IA)</div>
+            </ng-template>
           </div>
         </section>
 
@@ -462,18 +470,31 @@ import { findVocabDefinition } from '../../data/vocab-definitions';
       .vocab-del-btn:hover {
         color: #dc2626;
       }
-      .vocab-def-input {
-        width: 100%;
-        padding: 4px 8px;
-        border: 1px solid #cbd5e1;
-        border-radius: 6px;
+      .vocab-def-preview {
         font-size: 0.85rem;
+        color: #334155;
+      }
+      .vocab-def-missing {
+        font-size: 0.82rem;
+        color: #b45309;
+      }
+      .vocab-ai-btn {
+        background: #ede9fe;
+        color: #5b21b6;
+        border: 1px solid #c4b5fd;
+        border-radius: 6px;
+        padding: 2px 8px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        cursor: pointer;
       }
     `,
   ],
 })
 export class ParentDashboardComponent {
   private readonly storage = inject(StorageService);
+  private readonly vocabAi = inject(VocabAiService);
+  public readonly loadingVocabWord = signal<string | null>(null);
   public readonly sessions = this.storage.sessions;
   public readonly enabledTypes = this.storage.enabledTypes;
   public readonly exerciseCount = this.storage.exerciseCount;
@@ -551,6 +572,15 @@ export class ParentDashboardComponent {
   onVocabDefChange(word: string, event: Event): void {
     const input = event.target as HTMLInputElement;
     this.storage.updateVocabDefinition(word, input.value);
+  }
+
+  async retryVocabAi(word: string): Promise<void> {
+    this.loadingVocabWord.set(word);
+    const res = await this.vocabAi.fetchDefinitions(word);
+    if (res) {
+      this.storage.setVocabDefinitions(word, res.correct, res.distractors);
+    }
+    this.loadingVocabWord.set(null);
   }
 
   removeVocab(word: string): void {

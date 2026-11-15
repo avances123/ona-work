@@ -499,7 +499,13 @@ export class ExerciseGeneratorService {
     usableVocab: { entry: VocabWordEntry; def: string }[]
   ): VocabExercise {
     const picked = usableVocab[Math.floor(Math.random() * usableVocab.length)];
-    const distractors = getDistractorDefinitions(picked.def, 2);
+    const customDistractors = picked.entry.distractors?.filter(
+      (d) => d.trim().length > 0 && d !== picked.def
+    );
+    const distractors =
+      customDistractors && customDistractors.length >= 2
+        ? customDistractors.slice(0, 2)
+        : getDistractorDefinitions(picked.def, 2);
     const options = [picked.def, ...distractors].sort(() => Math.random() - 0.5);
 
     return {
