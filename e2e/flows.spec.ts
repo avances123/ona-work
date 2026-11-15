@@ -417,7 +417,9 @@ test.describe('Ona Work - Flujos E2E y Modo Papá', () => {
     }
     await page.locator('button.restart-session-btn').click();
 
+    // Con 1 palabra y solo Vocabulario marcado, la sesión debe tener 1 ejercicio (no se repite en la misma sesión)
     for (let step = 0; step < 3; step++) {
+      await expect(page.locator('.exercise-indicator')).toContainText('Ejercicio 1 de 1');
       await expect(page.locator('.exercise-type-tag')).toContainText('Vocabulario');
       await expect(page.locator('.vocab-word-text')).toHaveText('cinturón');
       await expect(page.locator('.vocab-streak-pill')).toContainText(`Racha: ${step} / 3`);
@@ -425,10 +427,13 @@ test.describe('Ona Work - Flujos E2E y Modo Papá', () => {
       await expect(page.locator('.vocab-options')).toContainText('Plato muy caliente de sopa.');
       await expect(page.locator('.vocab-options')).toContainText('Animal volador con plumas.');
       await page.locator('.vocab-option-btn', { hasText: 'Tira de tela' }).click();
+      await expect(page.locator('.finished-card')).toBeVisible();
+      if (step < 2) {
+        await page.locator('button.restart-btn').click();
+      }
     }
 
-    // 5. Sesión completada y palabra eliminada del listado (aprendida)
-    await expect(page.locator('.finished-card')).toBeVisible();
+    // 5. Palabra eliminada del listado (aprendida)
     await page.keyboard.press('Alt+KeyP');
     await expect(page.locator('.vocab-config')).toContainText('Vocabulario en Práctica (0)');
 

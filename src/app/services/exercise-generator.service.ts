@@ -53,16 +53,29 @@ export class ExerciseGeneratorService {
       ? [...enabledTypes]
       : (['calc', 'mosaic', 'sudoku', 'series', 'coords', 'crypto', 'reading', 'vocab'] as ExerciseType[]);
 
+    // Barajar las palabras disponibles para usarlas como máximo 1 vez por sesión
+    const vocabDeck = [...usableVocab].sort(() => Math.random() - 0.5);
+
     // Si no hay palabras pendientes con definición, el ejercicio de vocabulario NO sale
-    if (usableVocab.length === 0) {
+    if (vocabDeck.length === 0) {
       availableTypes = availableTypes.filter((t) => t !== 'vocab');
       if (availableTypes.length === 0) {
         availableTypes = ['calc', 'reading'];
       }
     }
 
+    let typeCursor = 0;
     for (let i = 0; i < count; i++) {
-      const type = availableTypes[i % availableTypes.length];
+      if (availableTypes.length === 0) break;
+
+      let type = availableTypes[typeCursor % availableTypes.length];
+      if (type === 'vocab' && vocabDeck.length === 0) {
+        availableTypes = availableTypes.filter((t) => t !== 'vocab');
+        if (availableTypes.length === 0) break;
+        type = availableTypes[typeCursor % availableTypes.length];
+      }
+      typeCursor++;
+
       const id = `ex-${Date.now()}-${i}`;
 
       switch (type) {
@@ -87,9 +100,16 @@ export class ExerciseGeneratorService {
         case 'reading':
           exercises.push(this.generateReading(id));
           break;
-        case 'vocab':
-          exercises.push(this.generateVocab(id, usableVocab));
+        case 'vocab': {
+          const picked = vocabDeck.pop();
+          if (picked) {
+            exercises.push(this.generateVocab(id, picked));
+          }
+          if (vocabDeck.length === 0) {
+            availableTypes = availableTypes.filter((t) => t !== 'vocab');
+          }
           break;
+        }
       }
     }
 
@@ -496,9 +516,8 @@ export class ExerciseGeneratorService {
 
   private generateVocab(
     id: string,
-    usableVocab: { entry: VocabWordEntry; def: string }[]
+    picked: { entry: VocabWordEntry; def: string }
   ): VocabExercise {
-    const picked = usableVocab[Math.floor(Math.random() * usableVocab.length)];
     const customDistractors = picked.entry.distractors?.filter(
       (d) => d.trim().length > 0 && d !== picked.def
     );
