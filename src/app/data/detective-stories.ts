@@ -24,8 +24,8 @@ export const DETECTIVE_STORIES: DetectiveStoryData[] = [
       'Junto a la pata de la silla encontró tres migas sospechosas de galleta de chocolate.',
       'Un poco más allá brillaba un rastro pequeñísimo de zapatillas rojas que iba directo hacia el cuarto de juguetes.',
       'Ona siguió las huellas de puntillas, sin hacer ni pizca de ruido, como un gato espía.',
-      'Cuando abrió la puerta despacio, descubrió al gran culpable sentado en la alfombra: era su hermano Leo mirando un coche verde muy de cerca.',
-      '—¡Ajá! —dijo Ona—. El caso está resuelto: Leo solo quería ver si su coche tenía hormigas conductoras.',
+      'Cuando abrió la puerta despacio, descubrió al gran culpable sentado en la alfombra: era su amigo Guillem mirando un coche verde muy de cerca.',
+      '—¡Ajá! —dijo Ona—. El caso está resuelto: Guillem solo quería ver si su coche tenía hormigas conductoras.',
     ],
     questions: [
       {
@@ -49,10 +49,10 @@ export const DETECTIVE_STORIES: DetectiveStoryData[] = [
   {
     caseTitle: 'Caso 2: Las fresas secuestradas',
     sentences: [
-      'La abuela estaba muy orgullosa de su gran tesoro del día: un cuenco enorme con ocho fresas rojas y brillantes.',
+      'Papá estaba muy orgulloso de su gran tesoro del día: un cuenco enorme con ocho fresas rojas y brillantes.',
       'Las dejó cerca de la ventana de la cocina para que se enfriaran con la brisa.',
       'Luego salió un momento al jardín para saludar a sus tomates y regar las plantas.',
-      'Al volver, la abuela abrió los ojos como platos: ¡en el cuenco solo quedaban tres fresas solitarias!',
+      'Al volver, papá abrió los ojos como platos: ¡en el cuenco solo quedaban tres fresas solitarias!',
       'Alguien había dado un buen mordisco al tesoro mientras ella miraba las flores.',
       'La detective Ona sacó su libreta secreta y empezó a interrogar a la ventana.',
       '—¿Quién habrá sido? ¿Un dragón vegetariano? —preguntó Ona rascándose la barbilla.',
@@ -63,7 +63,7 @@ export const DETECTIVE_STORIES: DetectiveStoryData[] = [
     ],
     questions: [
       {
-        question: '¿Cuántas fresas tenía la abuela en el cuenco al principio?',
+        question: '¿Cuántas fresas tenía papá en el cuenco al principio?',
         options: ['ocho', 'tres', 'cinco'],
         correctAnswer: 'ocho',
         clueSentenceIndex: 0,
@@ -73,7 +73,7 @@ export const DETECTIVE_STORIES: DetectiveStoryData[] = [
         options: [
           'una urraca con el pico manchado de rojo',
           'un dragón vegetariano',
-          'el gato de la abuela',
+          'el gato de papá',
         ],
         correctAnswer: 'una urraca con el pico manchado de rojo',
         clueSentenceIndex: 9,
@@ -115,7 +115,7 @@ export const DETECTIVE_STORIES: DetectiveStoryData[] = [
     sentences: [
       'El lunes por la mañana ocurrió una tragedia terrible en el dormitorio: faltaba un calcetín.',
       'No era un calcetín cualquiera, sino el calcetín de rayas naranjas que daba buena suerte.',
-      'Su hermano gemelo esperaba muy triste y bien doblado dentro del cajón.',
+      'El otro calcetín de la pareja esperaba muy triste y bien doblado dentro del cajón.',
       'Ona decidió abrir una investigación urgente antes de ponerse los zapatos.',
       '—Un calcetín no se va de vacaciones por su cuenta —murmuró mirando debajo de la cama.',
       'Allí no había nada, pero de pronto oyó un ronquido sospechoso que venía del salón.',
@@ -133,7 +133,7 @@ export const DETECTIVE_STORIES: DetectiveStoryData[] = [
       },
       {
         question: '¿Quién estaba abrazando el calcetín detrás del sofá?',
-        options: ['el gato Bigotes', 'el perro Toby', 'su hermano Leo'],
+        options: ['el gato Bigotes', 'el perro Toby', 'su amigo Guillem'],
         correctAnswer: 'el gato Bigotes',
         clueSentenceIndex: 8,
       },
@@ -150,7 +150,7 @@ export const DETECTIVE_STORIES: DetectiveStoryData[] = [
       'Siguió las marcas blancas por las baldosas hasta llegar a la puerta del baño pequeño.',
       'Dentro del baño el grifo goteaba despacio y había un taburete pegado al lavabo.',
       'En la toalla azul habían quedado marcados cinco deditos blancos muy sospechosos.',
-      'De repente salió su prima Noa con la punta de la nariz completamente blanca de harina.',
+      'De repente salió su amiga Emma con la punta de la nariz completamente blanca de harina.',
       'Solo quería hacer un muñeco de nieve encima de la mesa sin que nadie la viera.',
     ],
     questions: [
@@ -172,25 +172,25 @@ export const DETECTIVE_STORIES: DetectiveStoryData[] = [
     caseTitle: 'Caso 6: El ataque del paraguas misterioso',
     sentences: [
       'En el patio del colegio empezaron a caer cuatro gotas despistadas justo antes del recreo.',
-      'Marta había dejado su cuaderno favorito de dibujo encima del banco de madera.',
+      'Emma había dejado su cuaderno favorito de dibujo encima del banco de madera.',
       'Cuando volvió del baño, se llevó un buen susto al ver tres goterones encima de la tapa.',
-      '—¿Habrá llovido solo encima de mi cuaderno? —preguntó Marta muy extrañada.',
+      '—¿Habrá llovido solo encima de mi cuaderno? —preguntó Emma muy extrañada.',
       'La detective Ona tocó las hojas de dentro: estaban completamente secas y calentitas.',
       'Además, el resto del banco de madera estaba seco como un desierto.',
       'Entonces miró alrededor buscando a alguien que llevara agua escondida.',
-      'Justo al lado estaba Pablo sacudiendo un paraguas verde enorme como si fuera una espada.',
+      'Justo al lado estaba Guillem sacudiendo un paraguas verde enorme como si fuera una espada.',
       'Del paraguas verde caían todavía gotas de lluvia saltando por todas partes.',
-      'Pablo pidió perdón riendo y Marta secó la tapa con un pañuelo de papel.',
+      'Guillem pidió perdón riendo y Emma secó la tapa con un pañuelo de papel.',
     ],
     questions: [
       {
-        question: '¿Dónde había dejado Marta su cuaderno de dibujo?',
+        question: '¿Dónde había dejado Emma su cuaderno de dibujo?',
         options: ['encima del banco de madera', 'dentro de la mochila', 'en la mesa de clase'],
         correctAnswer: 'encima del banco de madera',
         clueSentenceIndex: 1,
       },
       {
-        question: '¿Qué estaba sacudiendo Pablo al lado del banco?',
+        question: '¿Qué estaba sacudiendo Guillem al lado del banco?',
         options: ['un paraguas verde', 'una botella de agua', 'un cubo azul'],
         correctAnswer: 'un paraguas verde',
         clueSentenceIndex: 7,
@@ -232,12 +232,12 @@ export const DETECTIVE_STORIES: DetectiveStoryData[] = [
       'El reloj redondo de la cocina era tan puntual que nunca fallaba ni un segundo.',
       'Pero el jueves por la tarde se quedó parado en seco justo a las cuatro en punto.',
       'Ona acercó la oreja al cristal y no oyó ni un solo tic-tac por ninguna parte.',
-      '—Creo que este reloj se ha quedado dormido —bromeó mamá mirándolo desde lejos.',
+      '—Creo que este reloj se ha quedado dormido —bromeó papá mirándolo con cara de detective.',
       'Con mucho cuidado lo descolgaron de la pared para mirar su barriga por detrás.',
       'La tapa trasera estaba abierta y faltaba una de las dos pilas.',
       '—¡Ajá! Un robo de energía en plena tarde —dijo Ona mirando la encimera.',
       'Al lado de la tostadora había un coche teledirigido con las luces encendidas a toda potencia.',
-      'Su hermano Leo había tomado prestada la pila del reloj porque quería correr carreras por el pasillo.',
+      'Ariadna, que había venido a jugar, había tomado prestada la pila del reloj porque quería correr carreras por el pasillo.',
       'Le pusieron una pila nueva al reloj y volvió a trabajar sin quejarse más.',
     ],
     questions: [
@@ -248,7 +248,7 @@ export const DETECTIVE_STORIES: DetectiveStoryData[] = [
         clueSentenceIndex: 1,
       },
       {
-        question: '¿Para qué había cogido Leo la pila del reloj?',
+        question: '¿Para qué había cogido Ariadna la pila del reloj?',
         options: [
           'para su coche teledirigido',
           'para una linterna amarilla',
@@ -291,16 +291,16 @@ export const DETECTIVE_STORIES: DetectiveStoryData[] = [
   {
     caseTitle: 'Caso 10: El lápiz fugitivo',
     sentences: [
-      'En clase de plástica saltaron todas las alarmas: había desaparecido el lápiz dorado de Lucía.',
+      'En clase de plástica saltaron todas las alarmas: había desaparecido el lápiz dorado de Emma.',
       'No era un lápiz normal, porque tenía una goma en forma de estrella en la punta.',
       'Ona se puso su sombrero imaginario de detective y empezó a interrogar a la mesa del fondo.',
-      'Marcos estaba muy concentrado pintando un cohete gigante con ceras de colores.',
-      'Elena recortaba cartulinas verdes haciendo caras muy graciosas con la lengua fuera.',
+      'Guillem estaba muy concentrado pintando un cohete gigante con ceras de colores.',
+      'Ariadna recortaba cartulinas verdes haciendo caras muy graciosas con la lengua fuera.',
       'Nadie había visto volar ningún lápiz dorado por encima de las cabezas.',
       'Entonces Ona se agachó debajo de la mesa buscando pistas en las sombras.',
       'Allí vio brillar una cosa dorada metida justo dentro de una caja de tizas.',
       'El lápiz había rodado por la mesa inclinada y había aterrizado dentro de la caja como por arte de magia.',
-      'Lucía dio un abrazo a Ona y guardó su lápiz estrella a buen recaudo.',
+      'Emma dio un abrazo a Ona y guardó su lápiz estrella a buen recaudo.',
     ],
     questions: [
       {
@@ -311,7 +311,7 @@ export const DETECTIVE_STORIES: DetectiveStoryData[] = [
       },
       {
         question: '¿Dónde encontró Ona el lápiz dorado?',
-        options: ['dentro de una caja de tizas', 'en el estuche de Elena', 'debajo de la pizarra'],
+        options: ['dentro de una caja de tizas', 'en el estuche de Ariadna', 'debajo de la pizarra'],
         correctAnswer: 'dentro de una caja de tizas',
         clueSentenceIndex: 7,
       },
@@ -325,11 +325,11 @@ export const DETECTIVE_STORIES: DetectiveStoryData[] = [
       'Pero el autor secreto se había olvidado de poner su nombre abajo.',
       '—¡Un mensaje cifrado sin firma! —susurró Ona frotándose las manos emocionada.',
       'Miró las letras con mucha atención y vio que todas las letras o tenían una sonrisa dibujada dentro.',
-      'Solo su amiga Clara dibujaba caritas sonrientes dentro de las letras o.',
+      'Solo su amiga Emma dibujaba caritas sonrientes dentro de las letras o.',
       'Además, en una esquina del papel había un sello de un dinosaurio azul muy simpático.',
-      'Clara había estrenado ese sello nuevo el día anterior enseñándoselo a todo el mundo.',
-      'Por la tarde Ona fue al parque con su patinete amarillo y encontró a Clara esperándola con dos bocadillos.',
-      '—¿Cómo me descubriste tan rápido? —preguntó Clara muerta de risa.',
+      'Emma había estrenado ese sello nuevo el día anterior enseñándoselo a todo el mundo.',
+      'Por la tarde Ona fue al parque con su patinete amarillo y encontró a Emma esperándola con dos bocadillos.',
+      '—¿Cómo me descubriste tan rápido? —preguntó Emma muerta de risa.',
     ],
     questions: [
       {
@@ -358,7 +358,7 @@ export const DETECTIVE_STORIES: DetectiveStoryData[] = [
       'Entonces Ona metió la mano con cuidado dentro del buzón y dio unos golpecitos.',
       'Al fondo notó una revista muy gorda que estaba atravesada como una pared secreta.',
       'Al sacar la revista hacia fuera, la postal del faro cayó directamente encima de sus manos.',
-      'Era una postal de los abuelos desde la playa mandando muchos besos.',
+      'Era una postal de su amiga Emma desde la playa mandando muchos besos.',
     ],
     questions: [
       {
@@ -379,12 +379,12 @@ export const DETECTIVE_STORIES: DetectiveStoryData[] = [
     caseTitle: 'Caso 13: El enigma de las botas con barro',
     sentences: [
       'Alguien había entrado en el recibidor dejando un caminito de huellas de barro seco.',
-      'En la casa vivían papá, mamá, Ona y el perro Toby, así que había cuatro sospechosos.',
+      'En la casa vivían papá, Ona y el perro Toby, así que había tres sospechosos.',
       '—Nadie sale de esta habitación hasta descubrir al culpable —anunció Ona muy seria.',
       'Cogió su regla pequeña de madera y midió una de las huellas del suelo.',
       'Eran larguísimas y tenían dibujadas unas rayas de suela muy profundas.',
       'Eso quería decir que no podían ser las patas peludas de Toby ni las botas pequeñas de Ona.',
-      'Miró el armario de los zapatos y vio las botas de mamá limpias y relucientes como un espejo.',
+      'Miró el armario de los zapatos y vio sus propias zapatillas limpias y relucientes como un espejo.',
       'Solo quedaba un sospechoso: papá acababa de volver del huerto con una cesta llena de tomates.',
       'Detrás de la puerta estaban escondidas sus botas de agua con el mismo barro seco en los tacones.',
       'Papá levantó las manos rindiéndose y barrió el pasillo en dos minutos.',
@@ -398,7 +398,7 @@ export const DETECTIVE_STORIES: DetectiveStoryData[] = [
       },
       {
         question: '¿De quién eran las botas con barro?',
-        options: ['de papá', 'de mamá', 'del perro Toby'],
+        options: ['de papá', 'de Ariadna', 'del perro Toby'],
         correctAnswer: 'de papá',
         clueSentenceIndex: 8,
       },
@@ -407,10 +407,10 @@ export const DETECTIVE_STORIES: DetectiveStoryData[] = [
   {
     caseTitle: 'Caso 14: La vela fugada del pastel',
     sentences: [
-      'Era el cumpleaños de mamá y en la cocina esperaba un pastel delicioso de limón.',
+      'Era el cumpleaños de papá y en la cocina esperaba un pastel delicioso de limón.',
       'Habían puesto seis velas de colores encima, listas para cantar a pleno pulmón.',
       'Pero justo antes de encenderlas, Ona contó las velas y dio un respingo: ¡faltaba la vela morada!',
-      '—¿Habrá salido corriendo para no derretirse? —preguntó papá aguantándose la risa.',
+      '—¿Habrá salido corriendo para no derretirse? —bromeó papá aguantándose la risa.',
       'Ona empezó la búsqueda mirando debajo de la mesa del comedor.',
       'Allí solo encontró una servilleta de papel arrugada y una pelusa aburrida.',
       'Luego miró en la bandeja de los vasos, pero tampoco había ni rastro de la vela.',
@@ -420,7 +420,7 @@ export const DETECTIVE_STORIES: DetectiveStoryData[] = [
     ],
     questions: [
       {
-        question: '¿De qué sabor era el pastel de cumpleaños de mamá?',
+        question: '¿De qué sabor era el pastel de cumpleaños de papá?',
         options: ['de limón', 'de fresa', 'de chocolate'],
         correctAnswer: 'de limón',
         clueSentenceIndex: 0,
@@ -440,16 +440,16 @@ export const DETECTIVE_STORIES: DetectiveStoryData[] = [
   {
     caseTitle: 'Caso 15: La pieza rebelde del puzle',
     sentences: [
-      'Ona y su amigo Hugo estaban montando un puzle gigante de un bosque encantado.',
+      'Ona y su amigo Guillem estaban montando un puzle gigante de un bosque encantado.',
       'Después de mucho trabajo, ya solo les faltaba colocar una última pieza de color azul.',
       'Pero aquella pieza del cielo parecía haberse vuelto invisible por arte de magia.',
       'Buscaron entre los cojines del sofá y miraron debajo de la mesa baja sin suerte.',
-      'Hugo sacudió la caja vacía del puzle como si fuera una maraca, pero no sonó nada.',
-      '—A ver, detective, necesitamos un milagro —dijo Hugo tumbándose en el suelo.',
+      'Guillem sacudió la caja vacía del puzle como si fuera una maraca, pero no sonó nada.',
+      '—A ver, detective, necesitamos un milagro —dijo Guillem tumbándose en el suelo.',
       'Ona miró con mucha calma todo el dibujo del puzle que ya estaba montado.',
       'De pronto señaló una esquina verde del árbol: ¡allí había metida una pieza azul clarito!',
       'Habían colocado la pieza del cielo en el árbol sin darse cuenta porque encajaba un poco.',
-      'Al sacarla y ponerla arriba, el cielo quedó perfecto y la pieza del árbol apareció pegada en la manga de Hugo.',
+      'Al sacarla y ponerla arriba, el cielo quedó perfecto y la pieza del árbol apareció pegada en la manga de Guillem.',
     ],
     questions: [
       {
@@ -461,11 +461,11 @@ export const DETECTIVE_STORIES: DetectiveStoryData[] = [
       {
         question: '¿Dónde estaba escondida al final la pieza del árbol?',
         options: [
-          'pegada en la manga de Hugo',
+          'pegada en la manga de Guillem',
           'dentro de la caja vacía',
           'entre los cojines del sofá',
         ],
-        correctAnswer: 'pegada en la manga de Hugo',
+        correctAnswer: 'pegada en la manga de Guillem',
         clueSentenceIndex: 9,
       },
     ],
@@ -481,8 +481,8 @@ export const DETECTIVE_STORIES: DetectiveStoryData[] = [
       'En lugar de guantes tocó un tubo largo y duro: ¡era una flauta de madera!',
       'Ona sabía perfectamente que ella siempre guardaba su flauta dentro de su funda azul.',
       'Así que miró la etiqueta del cuello del abrigo para descubrir el misterio.',
-      'En la etiqueta ponía escrito el nombre de Sofía con letras grandes y negras.',
-      'Volvió corriendo al aula y encontró a Sofía buscando su abrigo entre risas.',
+      'En la etiqueta ponía escrito el nombre de Ariadna con letras grandes y negras.',
+      'Volvió corriendo al aula y encontró a Ariadna buscando su abrigo entre risas.',
     ],
     questions: [
       {
@@ -493,8 +493,8 @@ export const DETECTIVE_STORIES: DetectiveStoryData[] = [
       },
       {
         question: '¿De quién era realmente aquel abrigo azul marino?',
-        options: ['de Sofía', 'de Clara', 'de Marta'],
-        correctAnswer: 'de Sofía',
+        options: ['de Ariadna', 'de Emma', 'de Guillem'],
+        correctAnswer: 'de Ariadna',
         clueSentenceIndex: 8,
       },
     ],
@@ -536,10 +536,10 @@ export const DETECTIVE_STORIES: DetectiveStoryData[] = [
       'Pero en lugar de osos, ¡en su sitio había un libro de planetas y cohetes espaciales!',
       '—¿Habrán venido unos extraterrestres a cambiarme el libro? —pensó Ona divertida.',
       'Fue a preguntar a la bibliotecaria, que miró en su cuaderno quién había estado allí la tarde anterior.',
-      'En la lista solo aparecía su compañero Mateo buscando historias del espacio.',
-      'Como ambos libros tenían la tapa roja brillante, Mateo los había confundido al guardar su mochila.',
-      'Ona salió al patio y vio a Mateo sentado muy serio mirando un dibujo de un pingüino.',
-      'Mateo puso cara de susto divertido al darse cuenta de que no era un astronauta.',
+      'En la lista solo aparecía su compañero Guillem buscando historias del espacio.',
+      'Como ambos libros tenían la tapa roja brillante, Guillem los había confundido al guardar su mochila.',
+      'Ona salió al patio y vio a Guillem sentado muy serio mirando un dibujo de un pingüino.',
+      'Guillem puso cara de susto divertido al darse cuenta de que no era un astronauta.',
       'Cambiaron los libros entre carcajadas y cada uno siguió con su aventura.',
     ],
     questions: [
@@ -550,7 +550,7 @@ export const DETECTIVE_STORIES: DetectiveStoryData[] = [
         clueSentenceIndex: 0,
       },
       {
-        question: '¿Por qué confundió Mateo los dos libros?',
+        question: '¿Por qué confundió Guillem los dos libros?',
         options: [
           'porque ambos tenían la tapa roja brillante',
           'porque tenían el mismo título',
@@ -634,7 +634,7 @@ export const DETECTIVE_STORIES: DetectiveStoryData[] = [
       'No encontró ninguna por el suelo, pero de pronto oyó un ruido divertido en la caja de juguetes.',
       'Dentro de la caja había un castillo enorme hecho con bloques de madera.',
       'En lo más alto de dos torres brillaban como diamantes sus dos canicas azules.',
-      'Su primo Lucas las había usado para decorar el castillo del rey.',
+      'Su amigo Guillem las había usado para decorar el castillo del rey.',
       'Ona se rió mucho y le dejó usarlas un rato más antes de guardar el tesoro.',
     ],
     questions: [
@@ -645,7 +645,7 @@ export const DETECTIVE_STORIES: DetectiveStoryData[] = [
         clueSentenceIndex: 3,
       },
       {
-        question: '¿Dónde había puesto Lucas las dos canicas azules?',
+        question: '¿Dónde había puesto Guillem las dos canicas azules?',
         options: [
           'en lo alto de dos torres de un castillo',
           'debajo de la cama',
@@ -659,7 +659,7 @@ export const DETECTIVE_STORIES: DetectiveStoryData[] = [
   {
     caseTitle: 'Caso 22: El sello saltarín',
     sentences: [
-      'Ona escribió una carta preciosa para su tía Laura, que vive muy lejos.',
+      'Ona escribió una carta preciosa para su amiga Emma, que estaba de viaje.',
       'Metió el papel en un sobre blanco y escribió la dirección con su mejor letra.',
       'Después dejó el sobre encima del escritorio mientras recogía sus lápices.',
       'Cuando papá fue a llevarla al buzón de la calle, se quedó mirando la esquina del sobre.',
@@ -720,7 +720,7 @@ export const DETECTIVE_STORIES: DetectiveStoryData[] = [
       'Una mañana Ona bajó a desayunar y se encontró una sorpresa increíble en la mesa.',
       'Había dos tostadas recién hechas y un vaso de leche tibia sin que hubiera nadie cerca.',
       '—¿Habrá venido un hada panadera mientras dormíamos? —pensó muy intrigada.',
-      'Fue de puntillas hasta el dormitorio y vio que mamá seguía durmiendo tapada hasta la nariz.',
+      'Miró la puerta de la calle, pero seguía cerrada con llave, así que nadie de fuera había entrado.',
       'Entonces volvió a la cocina y tocó la cafetera: estaba fría como un polo de hielo.',
       'En cambio, la tostadora todavía estaba un poquito templada por los lados.',
       'De pronto vio una nota pequeña pegada en la puerta de la nevera con un corazón dibujado.',
@@ -730,13 +730,13 @@ export const DETECTIVE_STORIES: DetectiveStoryData[] = [
     ],
     questions: [
       {
-        question: '¿Cómo supo Ona que mamá no había preparado las tostadas?',
+        question: '¿Cómo supo Ona que no había entrado nadie de fuera?',
         options: [
-          'porque mamá seguía durmiendo',
+          'porque la puerta de la calle seguía cerrada con llave',
           'porque la tostadora estaba fría',
-          'porque mamá estaba en el mercado',
+          'porque Ariadna estaba de viaje',
         ],
-        correctAnswer: 'porque mamá seguía durmiendo',
+        correctAnswer: 'porque la puerta de la calle seguía cerrada con llave',
         clueSentenceIndex: 3,
       },
       {
@@ -792,7 +792,7 @@ export const DETECTIVE_STORIES: DetectiveStoryData[] = [
       'Debajo de la sombrilla no había ningún pirata, solo una toalla amarilla doblada.',
       'Encima de la toalla descansaba una caja pequeña de cartón con un lazo.',
       'Ona abrió la caja y encontró un barquito de papel con una nota que decía: ¡tesoro encontrado!',
-      'En ese momento salió su amigo Daniel detrás de una roca riéndose sin parar.',
+      'En ese momento salió su amigo Guillem detrás de una roca riéndose sin parar.',
     ],
     questions: [
       {
@@ -810,18 +810,18 @@ export const DETECTIVE_STORIES: DetectiveStoryData[] = [
     ],
   },
   {
-    caseTitle: 'Caso 27: Las gafas desaparecidas del abuelo',
+    caseTitle: 'Caso 27: Las gafas desaparecidas de papá',
     sentences: [
-      'El abuelo estaba sentado en su sillón muy preocupado porque no encontraba sus gafas de leer.',
+      'Papá estaba sentado en su sillón haciendo caras raras porque no encontraba sus gafas de leer.',
       'Sin ellas las letras del periódico parecían hormigas bailando por el papel.',
       'Ona se puso manos a la obra y empezó buscando en la mesa camilla del salón.',
       'Allí solo estaban el periódico abierto y una taza de té completamente vacía.',
       'Miró encima de la radio antigua y detrás de los cojines sin ver ni un cristal.',
-      '—Abuelo, ¿qué hiciste justo antes de sentarte en el sillón? —preguntó como una detective profesional.',
-      'El abuelo explicó que había salido al jardín a recoger limones amarillos del árbol.',
+      '—Papá, ¿qué hiciste justo antes de sentarte en el sillón? —preguntó como una detective profesional.',
+      'Papá explicó muy serio que había salido al jardín a recoger limones amarillos del árbol.',
       'Ona fue hasta el limonero y revisó toda la cesta de mimbre entre los limones.',
-      'Tampoco estaban allí, pero al volver al salón miró al abuelo de frente y soltó una risita.',
-      '¡El abuelo llevaba sus propias gafas subidas encima de la cabeza como si fueran una diadema!',
+      'Tampoco estaban allí, pero al volver al salón miró a papá de frente y soltó una risita.',
+      '¡Papá llevaba sus propias gafas subidas encima de la cabeza como si fueran una diadema!',
     ],
     questions: [
       {
@@ -835,7 +835,7 @@ export const DETECTIVE_STORIES: DetectiveStoryData[] = [
         clueSentenceIndex: 3,
       },
       {
-        question: '¿Dónde estaban realmente las gafas del abuelo?',
+        question: '¿Dónde estaban realmente las gafas de papá?',
         options: [
           'subidas encima de su cabeza',
           'en la cesta de mimbre',
@@ -887,7 +887,7 @@ export const DETECTIVE_STORIES: DetectiveStoryData[] = [
       'Metió los dedos en el bolsillo izquierdo y descubrió un pequeño agujero en la costura.',
       'La moneda había resbalado por el agujero y había viajado por dentro del forro hasta abajo del todo.',
       'Ona la sacó por el mismo caminito con paciencia de detective y compró sus cromos.',
-      'Al llegar a casa mamá cosió el bolsillo con hilo morado para cerrar la fuga.',
+      'Al llegar a casa papá cosió el bolsillo con hilo morado para cerrar la fuga.',
     ],
     questions: [
       {
