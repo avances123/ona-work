@@ -442,7 +442,12 @@ export class ExerciseGeneratorService {
     }
 
     const storyIndex = this.readingDeck.pop()!;
-    const story = DETECTIVE_STORIES[storyIndex];
+    return this.buildReadingExercise(id, storyIndex);
+  }
+
+  buildReadingExercise(id: string, storyIndex: number): ReadingExercise {
+    const safeIndex = Math.max(0, Math.min(storyIndex, DETECTIVE_STORIES.length - 1));
+    const story = DETECTIVE_STORIES[safeIndex];
 
     const shuffledQuestions = story.questions.map((q) => {
       const opts = [...q.options];

@@ -201,25 +201,33 @@ test.describe('Ona Work - Flujos E2E y Modo Papá', () => {
     await page.locator('button.restart-session-btn').click();
     await expect(page.locator('.dashboard-modal')).not.toBeVisible();
 
-    // 2. Verificar historia y preguntas
+    // 2. Verificar historia, selector de 60 relatos y preguntas
     await expect(page.locator('.exercise-type-tag')).toContainText('Lectura de Detectives');
     await expect(page.locator('.reading-case-title')).toBeVisible();
+    const storySelect = page.locator('.reading-story-select');
+    await expect(storySelect).toBeVisible();
+    await expect(storySelect.locator('option')).toHaveCount(60);
+
+    // Cambiar de relato desde el menú selector
+    await storySelect.selectOption('30');
+    await expect(page.locator('.reading-case-title')).toContainText('Caso 31:');
+
     const sentenceCount = await page.locator('.story-sentence').count();
     expect(sentenceCount).toBeGreaterThanOrEqual(10);
 
-    // 3. Resolver las 2 pistas del caso (probando opciones hasta acertar ambas)
-    for (let q = 0; q < 2; q++) {
-      await expect(page.locator('.reading-question-header')).toContainText(`Pista ${q + 1} de 2`, { ignoreCase: true });
+    // 3. Resolver las 3 pistas del caso (probando opciones hasta acertar todas)
+    for (let q = 0; q < 3; q++) {
+      await expect(page.locator('.reading-question-header')).toContainText(`Pista ${q + 1} de 3`, { ignoreCase: true });
       for (let attempt = 0; attempt < 3; attempt++) {
         const enabledBtns = page.locator('.reading-option-btn:not(:disabled)');
         await enabledBtns.first().click();
 
-        // Esperar a que avance de pista/ejercicio o muestre el feedback socrático
         await expect(async () => {
           const errVisible = await page.locator('.error-notice').isVisible();
-          const header = (await page.locator('.reading-question-header').innerText()).toLowerCase();
-          const indicator = await page.locator('.exercise-indicator').innerText();
-          const advanced = (q === 0 && header.includes('pista 2 de 2')) || (q === 1 && indicator.includes('Ejercicio 2 de'));
+          const nextBtnVisible = await page.locator('.reading-next-btn').isVisible();
+          const headerVisible = await page.locator('.reading-question-header').isVisible();
+          const header = headerVisible ? (await page.locator('.reading-question-header').innerText()).toLowerCase() : '';
+          const advanced = (q < 2 && header.includes(`pista ${q + 2} de 3`)) || (q === 2 && nextBtnVisible);
           expect(errVisible || advanced).toBe(true);
         }).toPass({ timeout: 3000 });
 
@@ -231,6 +239,10 @@ test.describe('Ona Work - Flujos E2E y Modo Papá', () => {
       }
     }
 
+    // 4. Verificar que NO avanza automáticamente y que el botón permite avanzar
+    await expect(page.locator('.exercise-indicator')).toContainText('Ejercicio 1 de');
+    await expect(page.locator('.reading-next-btn')).toBeVisible();
+    await page.locator('.reading-next-btn').click();
     await expect(page.locator('.exercise-indicator')).toContainText('Ejercicio 2 de');
   });
 });

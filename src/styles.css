@@ -100,3 +100,54 @@ html, body {
   text-decoration: line-through;
   cursor: not-allowed;
 }
+.reading-header-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+}
+.reading-story-select {
+  max-width: 260px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  border: 2px solid #bae6fd;
+  background: #f0f9ff;
+  color: #0369a1;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.reading-story-select:focus {
+  outline: none;
+  border-color: #0284c7;
+}
+.reading-solved-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+}
+.reading-solved-msg {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #15803d;
+}
+.reading-next-btn {
+  background: #0284c7;
+  color: #ffffff;
+  border: none;
+  border-radius: 14px;
+  padding: 12px 26px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+.reading-next-btn:hover {
+  background: #0369a1;
+  transform: translateY(-1px);
+}
+

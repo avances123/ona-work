@@ -57,7 +57,7 @@ Plataforma educativa y entorno interactivo de estudio adaptado para Ona (1.º de
 ### 7. Reparto de Personajes en Lectura de Detectives
 - **Protagonista:** Ona (practica **karate**).
 - **Familia:** Solo **Papá** (divertido y bromista; nunca mamá ni otros familiares).
-- **Mascotas:** Hámsters **Luna** y **Salami**, gato **Fuet**, perro **Pili**.
+- **Mascotas:** Hámsters **Luna** y **Salami**, gato **Fuet**, perra **Pili**.
 - **Amigos:** **Emma** (mejor amiga), **Guillem** (juega a ser novios).
 - **Antagonistas:** **Ariadna** (enemiga) y **Hug** (malvado como Ariadna).
 - **Secundarios:** **Natura**, **Noa Gómez**, **Coral** y la **Profesora Mireia**.

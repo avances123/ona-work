@@ -17,6 +17,7 @@ import {
 } from './models/exercise.model';
 import { ExerciseResult, SessionRecord } from './models/session.model';
 import { ParentDashboardComponent } from './components/parent-dashboard/parent-dashboard.component';
+import { DETECTIVE_STORIES } from './data/detective-stories';
 
 @Component({
   selector: 'app-root',
@@ -209,7 +210,19 @@ import { ParentDashboardComponent } from './components/parent-dashboard/parent-d
 
           <!-- 7. BLOQUE COMPRENSIÓN LECTORA (DETECTIVES) -->
           <div *ngIf="currentExercise().type === 'reading'" class="reading-block">
-            <div class="reading-case-title">🔍 {{ asReading(currentExercise()).caseTitle }}</div>
+            <div class="reading-header-row">
+              <div class="reading-case-title">🔍 {{ asReading(currentExercise()).caseTitle }}</div>
+              <select
+                class="reading-story-select"
+                aria-label="Elegir relato"
+                [value]="currentReadingStoryIndex()"
+                (change)="onSelectReadingStory($any($event.target).value)"
+              >
+                <option *ngFor="let item of readingStoryTitles" [value]="item.index">
+                  {{ item.title }}
+                </option>
+              </select>
+            </div>
 
             <div class="reading-story-box">
               <p class="reading-story-paragraph">
@@ -221,7 +234,7 @@ import { ParentDashboardComponent } from './components/parent-dashboard/parent-d
               </p>
             </div>
 
-            <div *ngIf="currentReadingQuestion() as rq" class="reading-question-area">
+            <div *ngIf="!readingCaseSolved() && currentReadingQuestion() as rq" class="reading-question-area">
               <div class="reading-question-header">
                 Pista {{ readingQuestionIndex() + 1 }} de {{ asReading(currentExercise()).questions.length }}
               </div>
@@ -237,6 +250,13 @@ import { ParentDashboardComponent } from './components/parent-dashboard/parent-d
                   {{ opt }}
                 </button>
               </div>
+            </div>
+
+            <div *ngIf="readingCaseSolved()" class="reading-solved-area">
+              <div class="reading-solved-msg">🕵️‍♀️ ¡Caso resuelto, detective!</div>
+              <button class="reading-next-btn" (click)="advanceFromReading()">
+                Siguiente ejercicio →
+              </button>
             </div>
           </div>
 
@@ -815,6 +835,11 @@ export class App implements OnInit, OnDestroy {
   public readonly readingQuestionIndex = signal<number>(0);
   public readonly readingDiscardedOptions = signal<string[]>([]);
   public readonly readingClueActive = signal<boolean>(false);
+  public readonly readingCaseSolved = signal<boolean>(false);
+  public readonly readingStoryTitles = DETECTIVE_STORIES.map((s, idx) => ({
+    index: idx,
+    title: s.caseTitle,
+  }));
 
   private sessionStartTime: string = '';
   private recordedResults: ExerciseResult[] = [];
@@ -867,6 +892,7 @@ export class App implements OnInit, OnDestroy {
     this.readingQuestionIndex.set(0);
     this.readingDiscardedOptions.set([]);
     this.readingClueActive.set(false);
+    this.readingCaseSolved.set(false);
 
     const current = this.currentExercise();
     if (current && current.type === 'mosaic') {
@@ -1101,6 +1127,32 @@ export class App implements OnInit, OnDestroy {
   }
 
   // --- Comprensión Lectora (Detectives) ---
+  currentReadingStoryIndex(): number {
+    const current = this.currentExercise();
+    if (!current || current.type !== 'reading') return 0;
+    const idx = DETECTIVE_STORIES.findIndex((s) => s.caseTitle === current.caseTitle);
+    return idx >= 0 ? idx : 0;
+  }
+
+  onSelectReadingStory(indexStr: string): void {
+    const storyIndex = Number(indexStr);
+    if (Number.isNaN(storyIndex)) return;
+    const current = this.currentExercise();
+    if (!current || current.type !== 'reading') return;
+
+    const replacement = this.generator.buildReadingExercise(current.id, storyIndex);
+    const list = [...this.exercises()];
+    list[this.currentExerciseIndex()] = replacement;
+    this.exercises.set(list);
+
+    this.currentAttempts.set(1);
+    this.socraticFeedback.set(false);
+    this.readingQuestionIndex.set(0);
+    this.readingDiscardedOptions.set([]);
+    this.readingClueActive.set(false);
+    this.readingCaseSolved.set(false);
+  }
+
   currentReadingQuestion(): ReadingQuestion | null {
     const current = this.currentExercise();
     if (!current || current.type !== 'reading') return null;
@@ -1110,7 +1162,7 @@ export class App implements OnInit, OnDestroy {
   onReadingAnswer(selected: string): void {
     const current = this.currentExercise() as ReadingExercise;
     const q = this.currentReadingQuestion();
-    if (!q) return;
+    if (!q || this.readingCaseSolved()) return;
 
     if (selected === q.correctAnswer) {
       this.socraticFeedback.set(false);
@@ -1120,7 +1172,7 @@ export class App implements OnInit, OnDestroy {
       if (this.readingQuestionIndex() + 1 < current.questions.length) {
         this.readingQuestionIndex.update((i) => i + 1);
       } else {
-        this.handleExerciseSuccess();
+        this.readingCaseSolved.set(true);
       }
     } else {
       this.currentAttempts.update((a) => a + 1);
@@ -1130,6 +1182,11 @@ export class App implements OnInit, OnDestroy {
         list.includes(selected) ? list : [...list, selected]
       );
     }
+  }
+
+  advanceFromReading(): void {
+    if (!this.readingCaseSolved()) return;
+    this.handleExerciseSuccess();
   }
 
   asCalc(e: Exercise): CalcExercise {
