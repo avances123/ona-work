@@ -498,4 +498,33 @@ test.describe('Ona Work - Flujos E2E y Modo Papá', () => {
     await expect(page.locator('.vocab-word-text')).toHaveText('rasguño');
     await expect(page.locator('.vocab-options')).toContainText('Herida pequeña y superficial en la piel.');
   });
+
+  test('Imprimir / PDF genera 1 ejercicio por página y llama a window.print', async ({ page }) => {
+    await page.addInitScript(() => {
+      (window as any).__printCalled = 0;
+      window.print = () => {
+        (window as any).__printCalled++;
+      };
+    });
+
+    await page.goto('/');
+    await page.keyboard.press('Alt+KeyP');
+    await expect(page.locator('.dashboard-modal')).toBeVisible();
+
+    await page.locator('input.exercise-count-input').fill('5');
+    await page.locator('input.exercise-count-input').dispatchEvent('change');
+
+    await page.locator('button.print-session-btn').click();
+    await expect(page.locator('.dashboard-modal')).not.toBeVisible();
+    await expect(page.locator('.print-sheet .print-page')).toHaveCount(5);
+
+    await expect(async () => {
+      const calls = await page.evaluate(() => (window as any).__printCalled);
+      expect(calls).toBe(1);
+    }).toPass({ timeout: 3000 });
+
+    await page.emulateMedia({ media: 'print' });
+    await expect(page.locator('.print-sheet')).toBeVisible();
+    await expect(page.locator('.app-container')).not.toBeVisible();
+  });
 });

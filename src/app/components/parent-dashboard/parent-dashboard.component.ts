@@ -182,6 +182,7 @@ import { findVocabDefinition, normalizeVocabWord } from '../../data/vocab-defini
           <div class="session-actions">
             <button class="action-btn continue-session-btn" (click)="continueSession()">Continuar Sesión</button>
             <button class="action-btn restart-session-btn" (click)="restartSession()">Reiniciar Sesión</button>
+            <button class="action-btn print-session-btn" (click)="printSession()">🖨️ Imprimir / PDF</button>
           </div>
           <div class="data-actions">
             <button class="secondary-btn export-btn" (click)="exportBackup()">Exportar datos</button>
@@ -606,6 +607,13 @@ import { findVocabDefinition, normalizeVocabWord } from '../../data/vocab-defini
         opacity: 0.5;
         cursor: not-allowed;
       }
+      .print-session-btn {
+        background: #7c3aed;
+        color: #ffffff;
+      }
+      .print-session-btn:hover {
+        background: #6d28d9;
+      }
     `,
   ],
 })
@@ -641,6 +649,7 @@ export class ParentDashboardComponent {
   public readonly closed = output<void>();
   public readonly restartRequested = output<void>();
   public readonly continueRequested = output<void>();
+  public readonly printRequested = output<void>();
   public readonly transferMessage = signal<{ text: string; isError: boolean } | null>(null);
 
   onCountChange(event: Event): void {
@@ -659,6 +668,10 @@ export class ParentDashboardComponent {
   restartSession(): void {
     this.restartRequested.emit();
     this.closed.emit();
+  }
+
+  printSession(): void {
+    this.printRequested.emit();
   }
 
   isTypeEnabled(type: ExerciseType): boolean {

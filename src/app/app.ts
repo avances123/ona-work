@@ -345,8 +345,142 @@ import { normalizeVocabWord } from './data/vocab-definitions';
         (closed)="showDashboard.set(false)"
         (restartRequested)="restartSession()"
         (continueRequested)="continueSessionWithFilter()"
+        (printRequested)="prepareAndPrintSession()"
       ></app-parent-dashboard>
     </main>
+
+    <!-- Vista exclusiva para imprimir / guardar en PDF (1 ejercicio por página) -->
+    <section class="print-sheet" *ngIf="printExercises().length > 0">
+      <article *ngFor="let ex of printExercises(); let idx = index" class="print-page">
+        <header class="print-page-header">
+          <span class="print-badge">Ejercicio {{ idx + 1 }} de {{ printExercises().length }}</span>
+          <span class="print-title">{{ ex.title }}</span>
+        </header>
+        <p class="print-instructions">{{ ex.instructions }}</p>
+
+        <!-- 1. Cálculo -->
+        <div *ngIf="ex.type === 'calc'" class="print-body print-calc">
+          <div class="print-big-prompt">{{ asCalc(ex).operationText }} = ______</div>
+          <div class="print-options-row">
+            <span *ngFor="let opt of asCalc(ex).options" class="print-option-chip">◯ {{ opt }}</span>
+          </div>
+        </div>
+
+        <!-- 2. Mosaico 4x4 -->
+        <div *ngIf="ex.type === 'mosaic'" class="print-body print-mosaic">
+          <div class="print-mosaic-pair">
+            <div>
+              <div class="print-sublabel">Modelo</div>
+              <div class="print-grid-4x4">
+                <div
+                  *ngFor="let cell of mosaicCells16"
+                  class="print-mosaic-cell"
+                  [class.filled]="asMosaic(ex).targetCells.includes(cell)"
+                ></div>
+              </div>
+            </div>
+            <div>
+              <div class="print-sublabel">Copia aquí</div>
+              <div class="print-grid-4x4">
+                <div *ngFor="let cell of mosaicCells16" class="print-mosaic-cell"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Sudoku 4x4 -->
+        <div *ngIf="ex.type === 'sudoku'" class="print-body print-sudoku">
+          <div class="print-sudoku-board">
+            <div
+              *ngFor="let val of asSudoku(ex).grid; let cellIdx = index"
+              class="print-sudoku-cell"
+              [class.given]="asSudoku(ex).initialGiven[cellIdx]"
+              [class.thick-right]="cellIdx % 4 === 1"
+              [class.thick-bottom]="cellIdx >= 4 && cellIdx <= 7"
+            >
+              {{ val ?? '' }}
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Series Visuales -->
+        <div *ngIf="ex.type === 'series'" class="print-body print-series">
+          <div class="print-series-row">
+            <div *ngFor="let item of asSeries(ex).sequence" class="print-series-box">
+              <span *ngFor="let _ of [].constructor(item.count)" [style.color]="item.color">{{ item.shape }}</span>
+            </div>
+            <div class="print-series-box print-series-unknown">?</div>
+          </div>
+          <div class="print-sublabel">Rodea la continuación correcta:</div>
+          <div class="print-options-row">
+            <div *ngFor="let opt of asSeries(ex).options" class="print-series-option">
+              <span class="print-circle">◯</span>
+              <span *ngFor="let _ of [].constructor(opt.count)" [style.color]="opt.color">{{ opt.shape }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. Coordenadas -->
+        <div *ngIf="ex.type === 'coords'" class="print-body print-coords">
+          <div class="print-big-prompt">
+            Marca la casilla: <strong>{{ asCoords(ex).column }}{{ asCoords(ex).row }}</strong>
+          </div>
+          <div class="print-chess-wrapper">
+            <div *ngFor="let row of rows" class="print-chess-row">
+              <div class="print-chess-label">{{ row }}</div>
+              <div
+                *ngFor="let col of cols; let cIdx = index"
+                class="print-chess-cell"
+                [class.dark]="(rows.indexOf(row) + cIdx) % 2 === 1"
+              ></div>
+            </div>
+            <div class="print-chess-row">
+              <div class="print-chess-label"></div>
+              <div *ngFor="let col of cols" class="print-chess-col-label">{{ col }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 6. Criptogramas -->
+        <div *ngIf="ex.type === 'crypto'" class="print-body print-crypto">
+          <div class="print-code-table">
+            <div *ngFor="let item of asCrypto(ex).codeTable" class="print-code-pair">
+              <span>{{ item.symbol }} = {{ item.value }}</span>
+            </div>
+          </div>
+          <div class="print-big-prompt">
+            {{ asCrypto(ex).expressionSymbols[0] }}
+            {{ asCrypto(ex).expressionSymbols[1] }}
+            {{ asCrypto(ex).expressionSymbols[2] }} = ______
+          </div>
+          <div class="print-options-row">
+            <span *ngFor="let opt of asCrypto(ex).options" class="print-option-chip">◯ {{ opt }}</span>
+          </div>
+        </div>
+
+        <!-- 7. Lectura de Detectives -->
+        <div *ngIf="ex.type === 'reading'" class="print-body print-reading">
+          <div class="print-case-title">🔍 {{ asReading(ex).caseTitle }}</div>
+          <p class="print-story-text">{{ asReading(ex).sentences.join(' ') }}</p>
+          <div *ngFor="let q of asReading(ex).questions; let qIdx = index" class="print-reading-q">
+            <div class="print-q-title">{{ qIdx + 1 }}. {{ q.question }}</div>
+            <div class="print-q-options">
+              <span *ngFor="let opt of q.options" class="print-q-opt">◯ {{ opt }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 8. Vocabulario -->
+        <div *ngIf="ex.type === 'vocab'" class="print-body print-vocab">
+          <div class="print-big-prompt"><strong>{{ asVocab(ex).displayWord }}</strong></div>
+          <div class="print-vocab-options">
+            <div *ngFor="let opt of asVocab(ex).options" class="print-vocab-opt">
+              ◯ {{ opt }}
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
   `,
   styles: [
     `
@@ -358,6 +492,13 @@ import { normalizeVocabWord } from './data/vocab-definitions';
         background: #f8fafc;
         font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         color: #0f172a;
+      }
+      @media print {
+        :host {
+          height: auto !important;
+          overflow: visible !important;
+          background: #ffffff !important;
+        }
       }
       .app-container {
         display: flex;
@@ -862,6 +1003,7 @@ export class App implements OnInit, OnDestroy {
 
   // Lista procedural de 10 ejercicios por tanda
   public readonly exercises = signal<Exercise[]>([]);
+  public readonly printExercises = signal<Exercise[]>([]);
 
   // Estados socráticos
   public readonly socraticFeedback = signal<boolean>(false);
@@ -1172,6 +1314,21 @@ export class App implements OnInit, OnDestroy {
     this.startSession();
   }
 
+  prepareAndPrintSession(): void {
+    const enabled = this.storage.enabledTypes();
+    const targetCount = this.storage.exerciseCount();
+    const generated = this.generator.generateSession(
+      targetCount,
+      enabled,
+      this.storage.vocabWords()
+    );
+    this.printExercises.set(generated);
+    this.showDashboard.set(false);
+    setTimeout(() => {
+      window.print();
+    }, 60);
+  }
+
   continueSessionWithFilter(): void {
     const enabled = this.storage.enabledTypes();
     const currentList = this.exercises();
@@ -1345,6 +1502,9 @@ export class App implements OnInit, OnDestroy {
 
   asCalc(e: Exercise): CalcExercise {
     return e as CalcExercise;
+  }
+  asMosaic(e: Exercise): MosaicExercise {
+    return e as MosaicExercise;
   }
   asSeries(e: Exercise): SeriesExercise {
     return e as SeriesExercise;
