@@ -247,4 +247,73 @@ test.describe('Ona Work - Flujos E2E y Modo Papá', () => {
     await page.locator('.reading-next-btn').click();
     await expect(page.locator('.exercise-indicator')).toContainText('Ejercicio 2 de');
   });
+
+  test('Exportar e importar datos de supervisión restaura configuración e historial', async ({ page }) => {
+    await page.goto('/');
+
+    // 1. Abrir panel y cambiar configuración antes de exportar
+    await page.keyboard.press('Alt+KeyP');
+    await expect(page.locator('.dashboard-modal')).toBeVisible();
+
+    const countInput = page.locator('input.exercise-count-input');
+    await countInput.fill('7');
+    await countInput.dispatchEvent('change');
+
+    // Exportar JSON y verificar contenido descargado
+    const downloadPromise = page.waitForEvent('download');
+    await page.locator('button.export-btn').click();
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toMatch(/^ona-work-backup-\d{4}-\d{2}-\d{2}\.json$/);
+
+    const stream = await download.createReadStream();
+    const chunks: Buffer[] = [];
+    for await (const chunk of stream) {
+      chunks.push(Buffer.from(chunk));
+    }
+    const exportedJson = JSON.parse(Buffer.concat(chunks).toString('utf-8'));
+    expect(exportedJson.version).toBe(1);
+    expect(exportedJson.exerciseCount).toBe(7);
+
+    // 2. Importar un respaldo con historial y otra configuración (simula otro navegador)
+    const backupPayload = {
+      version: 1,
+      exportedAt: '2026-11-15T20:00:00.000Z',
+      exerciseCount: 12,
+      enabledTypes: ['crypto', 'reading'],
+      sessions: [
+        {
+          id: 'backup-session-1',
+          startedAt: '2026-11-15T18:00:00.000Z',
+          completedAt: '2026-11-15T18:10:00.000Z',
+          totalExercises: 2,
+          totalFocusSeconds: 180,
+          exercises: [
+            {
+              exerciseId: 'ex-1',
+              type: 'crypto',
+              title: 'Código Secreto',
+              elapsedSeconds: 90,
+              attemptsCount: 1,
+              idlePausesCount: 0,
+            },
+          ],
+        },
+      ],
+    };
+
+    await page.locator('input.import-file-input').setInputFiles({
+      name: 'backup.json',
+      mimeType: 'application/json',
+      buffer: Buffer.from(JSON.stringify(backupPayload)),
+    });
+
+    await expect(page.locator('.transfer-status')).toContainText('Datos importados (1 sesiones)');
+    await expect(countInput).toHaveValue('12');
+    await expect(page.locator('.metrics-summary')).toContainText('3 min');
+    await expect(page.locator('.session-item')).toHaveCount(1);
+
+    // 3. Reiniciar sesión y comprobar que aplica la configuración importada
+    await page.locator('button.restart-session-btn').click();
+    await expect(page.locator('.exercise-indicator')).toContainText('de 12');
+  });
 });

@@ -1,4 +1,4 @@
-import { Component, computed, inject, output } from '@angular/core';
+import { Component, computed, inject, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { StorageService } from '../../services/storage.service';
 import { ExerciseType } from '../../models/exercise.model';
@@ -98,12 +98,29 @@ import { ExerciseType } from '../../models/exercise.model';
           </div>
         </section>
 
+        <div *ngIf="transferMessage() as msg" class="transfer-status" [class.is-error]="msg.isError">
+          {{ msg.text }}
+        </div>
+
         <footer class="modal-footer">
           <div class="session-actions">
             <button class="action-btn continue-session-btn" (click)="continueSession()">Continuar Sesión</button>
             <button class="action-btn restart-session-btn" (click)="restartSession()">Reiniciar Sesión</button>
           </div>
-          <button class="clear-btn" (click)="clearAll()">Borrar Historial</button>
+          <div class="data-actions">
+            <button class="secondary-btn export-btn" (click)="exportBackup()">Exportar datos</button>
+            <label class="secondary-btn import-btn">
+              Importar datos
+              <input
+                type="file"
+                accept="application/json,.json"
+                class="import-file-input"
+                hidden
+                (change)="onImportFile($event)"
+              />
+            </label>
+            <button class="clear-btn" (click)="clearAll()">Borrar Historial</button>
+          </div>
         </footer>
       </div>
     </div>
@@ -307,13 +324,45 @@ import { ExerciseType } from '../../models/exercise.model';
         padding: 14px 24px;
         border-top: 1px solid #e2e8f0;
         display: flex;
+        flex-wrap: wrap;
         justify-content: space-between;
         align-items: center;
         gap: 12px;
       }
-      .session-actions {
+      .session-actions,
+      .data-actions {
         display: flex;
-        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+      }
+      .secondary-btn {
+        background: #f1f5f9;
+        color: #334155;
+        border: 1px solid #cbd5e1;
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+      }
+      .secondary-btn:hover {
+        background: #e2e8f0;
+      }
+      .transfer-status {
+        padding: 8px 24px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #166534;
+        background: #dcfce7;
+        border-top: 1px solid #bbf7d0;
+      }
+      .transfer-status.is-error {
+        color: #991b1b;
+        background: #fee2e2;
+        border-top-color: #fecaca;
       }
       .action-btn {
         border: none;
@@ -375,6 +424,7 @@ export class ParentDashboardComponent {
   public readonly closed = output<void>();
   public readonly restartRequested = output<void>();
   public readonly continueRequested = output<void>();
+  public readonly transferMessage = signal<{ text: string; isError: boolean } | null>(null);
 
   onCountChange(event: Event): void {
     const input = event.target as HTMLInputElement;
@@ -422,6 +472,57 @@ export class ParentDashboardComponent {
   clearAll(): void {
     if (confirm('¿Seguro que quieres borrar todo el historial local de sesiones?')) {
       this.storage.clearAll();
+      this.transferMessage.set(null);
+    }
+  }
+
+  exportBackup(): void {
+    const data = this.storage.exportData();
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const dateTag = new Date().toISOString().slice(0, 10);
+
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `ona-work-backup-${dateTag}.json`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+
+    this.transferMessage.set({
+      text: `Datos exportados (${data.sessions.length} sesiones).`,
+      isError: false,
+    });
+  }
+
+  async onImportFile(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    try {
+      const content = await file.text();
+      const parsed = JSON.parse(content);
+      const result = this.storage.importData(parsed);
+
+      if (result.ok) {
+        this.transferMessage.set({
+          text: `Datos importados (${this.sessions().length} sesiones).`,
+          isError: false,
+        });
+      } else {
+        this.transferMessage.set({
+          text: result.error ?? 'Formato de respaldo no válido.',
+          isError: true,
+        });
+      }
+    } catch {
+      this.transferMessage.set({
+        text: 'No se pudo leer el archivo JSON.',
+        isError: true,
+      });
+    } finally {
+      input.value = '';
     }
   }
 

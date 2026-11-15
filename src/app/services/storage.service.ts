@@ -9,6 +9,14 @@ const EXERCISE_COUNT_KEY = 'ona_work_exercise_count';
 const DEFAULT_TYPES: ExerciseType[] = ['calc', 'mosaic', 'sudoku', 'series', 'coords', 'crypto', 'reading'];
 const DEFAULT_EXERCISE_COUNT = 10;
 
+export interface OnaBackupData {
+  version: number;
+  exportedAt: string;
+  sessions: SessionRecord[];
+  enabledTypes: ExerciseType[];
+  exerciseCount: number;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -102,6 +110,52 @@ export class StorageService {
     } catch (e) {
       console.error('Error limpiando sesiones:', e);
     }
+  }
+
+  exportData(): OnaBackupData {
+    return {
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      sessions: this.sessionsSignal(),
+      enabledTypes: this.enabledTypesSignal(),
+      exerciseCount: this.exerciseCountSignal(),
+    };
+  }
+
+  importData(raw: unknown): { ok: boolean; error?: string } {
+    if (!raw || typeof raw !== 'object') {
+      return { ok: false, error: 'El archivo no contiene un objeto JSON válido.' };
+    }
+
+    const data = raw as Partial<OnaBackupData>;
+    if (!Array.isArray(data.sessions)) {
+      return { ok: false, error: 'Falta la lista de sesiones en el respaldo.' };
+    }
+
+    const validTypes = Array.isArray(data.enabledTypes)
+      ? data.enabledTypes.filter((t): t is ExerciseType => DEFAULT_TYPES.includes(t as ExerciseType))
+      : [];
+    const nextTypes = validTypes.length > 0 ? validTypes : DEFAULT_TYPES;
+
+    const rawCount = typeof data.exerciseCount === 'number' ? Math.floor(data.exerciseCount) : DEFAULT_EXERCISE_COUNT;
+    const nextCount = rawCount > 0 && rawCount <= 50 ? rawCount : DEFAULT_EXERCISE_COUNT;
+
+    this.sessionsSignal.set(data.sessions);
+    this.enabledTypesSignal.set(nextTypes);
+    this.exerciseCountSignal.set(nextCount);
+
+    if (this.isStorageAvailable()) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data.sessions));
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify(nextTypes));
+        localStorage.setItem(EXERCISE_COUNT_KEY, nextCount.toString());
+      } catch (e) {
+        console.error('Error guardando datos importados:', e);
+        return { ok: false, error: 'No se pudo guardar en localStorage.' };
+      }
+    }
+
+    return { ok: true };
   }
 }
 
