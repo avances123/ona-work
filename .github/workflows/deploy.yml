@@ -32,7 +32,7 @@ jobs:
         run: npm ci
 
       - name: Build Angular application
-        run: npm run build -- --base-href /ona-work/
+        run: npm run build
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
