@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { StorageService } from '../../services/storage.service';
 import { VocabAiService } from '../../services/vocab-ai.service';
 import { ExerciseType } from '../../models/exercise.model';
-import { findVocabDefinition } from '../../data/vocab-definitions';
+import { findVocabDefinition, normalizeVocabWord } from '../../data/vocab-definitions';
 
 @Component({
   selector: 'app-parent-dashboard',
@@ -59,8 +59,27 @@ import { findVocabDefinition } from '../../data/vocab-definitions';
 
         <section class="vocab-config">
           <h3>Vocabulario en Práctica ({{ vocabWords().length }})</h3>
+          <div class="vocab-add-row">
+            <input
+              type="text"
+              class="vocab-add-input"
+              placeholder="Añadir palabra (ej. rasguño)..."
+              [value]="newVocabWord()"
+              (input)="newVocabWord.set($any($event.target).value)"
+              (keydown.enter)="addManualVocab()"
+              [disabled]="addingVocab()"
+            />
+            <button
+              type="button"
+              class="vocab-add-manual-btn"
+              [disabled]="addingVocab() || !newVocabWord().trim()"
+              (click)="addManualVocab()"
+            >
+              {{ addingVocab() ? 'Buscando...' : '+ Añadir' }}
+            </button>
+          </div>
           <div *ngIf="vocabWords().length === 0" class="empty-msg">
-            No hay palabras pendientes. El ejercicio de Vocabulario no aparecerá hasta que Ona seleccione una palabra en un relato.
+            No hay palabras pendientes. El ejercicio de Vocabulario no aparecerá hasta que añadas una palabra o Ona la seleccione en un relato.
           </div>
           <div *ngFor="let w of vocabWords()" class="vocab-item">
             <div class="vocab-item-top">
@@ -488,6 +507,32 @@ import { findVocabDefinition } from '../../data/vocab-definitions';
         font-weight: 700;
         cursor: pointer;
       }
+      .vocab-add-row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+      .vocab-add-input {
+        flex: 1;
+        padding: 6px 10px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-size: 0.9rem;
+      }
+      .vocab-add-manual-btn {
+        background: #2563eb;
+        color: #ffffff;
+        border: none;
+        border-radius: 8px;
+        padding: 6px 14px;
+        font-weight: 700;
+        font-size: 0.85rem;
+        cursor: pointer;
+      }
+      .vocab-add-manual-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
     `,
   ],
 })
@@ -495,6 +540,8 @@ export class ParentDashboardComponent {
   private readonly storage = inject(StorageService);
   private readonly vocabAi = inject(VocabAiService);
   public readonly loadingVocabWord = signal<string | null>(null);
+  public readonly newVocabWord = signal<string>('');
+  public readonly addingVocab = signal<boolean>(false);
   public readonly sessions = this.storage.sessions;
   public readonly enabledTypes = this.storage.enabledTypes;
   public readonly exerciseCount = this.storage.exerciseCount;
@@ -572,6 +619,45 @@ export class ParentDashboardComponent {
   onVocabDefChange(word: string, event: Event): void {
     const input = event.target as HTMLInputElement;
     this.storage.updateVocabDefinition(word, input.value);
+  }
+
+  async addManualVocab(): Promise<void> {
+    const cleaned = normalizeVocabWord(this.newVocabWord());
+    if (!cleaned || cleaned.length < 2 || !/^[a-záéíóúüñ]+$/i.test(cleaned)) {
+      this.transferMessage.set({
+        text: 'Introduce una única palabra válida (solo letras).',
+        isError: true,
+      });
+      return;
+    }
+
+    const { added } = this.storage.addVocabWord(cleaned);
+    this.newVocabWord.set('');
+
+    const existing = this.vocabWords().find((w) => w.word === cleaned);
+    if (!added && existing?.definition) {
+      this.transferMessage.set({
+        text: `La palabra "${cleaned}" ya está en la lista.`,
+        isError: false,
+      });
+      return;
+    }
+
+    this.addingVocab.set(true);
+    const res = await this.vocabAi.fetchDefinitions(cleaned);
+    if (res) {
+      this.storage.setVocabDefinitions(cleaned, res.correct, res.distractors);
+      this.transferMessage.set({
+        text: `Palabra "${cleaned}" añadida con definición.`,
+        isError: false,
+      });
+    } else {
+      this.transferMessage.set({
+        text: `Palabra "${cleaned}" añadida (si falta definición, pulsa ✨ Generar IA).`,
+        isError: false,
+      });
+    }
+    this.addingVocab.set(false);
   }
 
   async retryVocabAi(word: string): Promise<void> {

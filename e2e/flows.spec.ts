@@ -441,4 +441,51 @@ test.describe('Ona Work - Flujos E2E y Modo Papá', () => {
     await page.locator('button.restart-session-btn').click();
     await expect(page.locator('.exercise-type-tag')).not.toContainText('Vocabulario');
   });
+
+  test('Papá puede añadir palabras manualmente desde el panel de supervisión', async ({ page }) => {
+    await page.route('https://text.pollinations.ai/**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/plain; charset=utf-8',
+        body: JSON.stringify({
+          correct: 'Herida pequeña y superficial en la piel.',
+          distractors: ['Plato muy caliente de sopa.', 'Animal volador con plumas.'],
+        }),
+      });
+    });
+
+    await page.goto('/');
+    await page.keyboard.press('Alt+KeyP');
+    await expect(page.locator('.dashboard-modal')).toBeVisible();
+
+    await page.locator('input.vocab-add-input').fill('rasguño');
+    await page.locator('button.vocab-add-manual-btn').click();
+
+    await expect(page.locator('.vocab-config')).toContainText('Vocabulario en Práctica (1)');
+    await expect(page.locator('.vocab-config')).toContainText('rasguño');
+    await expect(page.locator('.vocab-config')).toContainText('Herida pequeña y superficial en la piel.');
+
+    // Dejar solo Vocabulario marcado y reiniciar sesión
+    const checkboxes = page.locator('.type-checkbox-label input[type="checkbox"]');
+    const count = await checkboxes.count();
+    for (let i = 0; i < count; i++) {
+      const box = checkboxes.nth(i);
+      const label = await page.locator('.type-checkbox-label').nth(i).innerText();
+      if (label.includes('Vocabulario') && !(await box.isChecked())) {
+        await box.click();
+      }
+    }
+    for (let i = 0; i < count; i++) {
+      const box = checkboxes.nth(i);
+      const label = await page.locator('.type-checkbox-label').nth(i).innerText();
+      if (!label.includes('Vocabulario') && (await box.isChecked())) {
+        await box.click();
+      }
+    }
+    await page.locator('button.restart-session-btn').click();
+
+    await expect(page.locator('.exercise-type-tag')).toContainText('Vocabulario');
+    await expect(page.locator('.vocab-word-text')).toHaveText('rasguño');
+    await expect(page.locator('.vocab-options')).toContainText('Herida pequeña y superficial en la piel.');
+  });
 });
