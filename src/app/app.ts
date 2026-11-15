@@ -870,7 +870,10 @@ export class App implements OnInit, OnDestroy {
 
     const current = this.currentExercise();
     if (current && current.type === 'mosaic') {
+      this.timer.reset();
       this.startMosaicMemorizePhase();
+    } else if (current && current.type === 'reading') {
+      this.timer.reset();
     } else if (current && current.type === 'sudoku') {
       this.sudokuCurrentGrid.set([...current.grid]);
       this.timer.start();

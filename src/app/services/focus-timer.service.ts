@@ -48,6 +48,15 @@ export class FocusTimerService implements OnDestroy {
     return this.elapsedSeconds();
   }
 
+  reset(): void {
+    this.isRunning = false;
+    this.clearIntervals();
+    this.elapsedSeconds.set(0);
+    this.idlePausesCount.set(0);
+    this.isIdle.set(false);
+    this.secondsSinceLastActivity = 0;
+  }
+
   private startIntervals(): void {
     this.clearIntervals();
 

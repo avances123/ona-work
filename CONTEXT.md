@@ -49,6 +49,15 @@ Plataforma educativa y entorno interactivo de estudio adaptado para Ona (1.º de
 ### 5. Foco Efectivo e Inactividad (`Focus & Idle Detection`)
 - **Tiempo de Foco:** Tiempo en el que Ona está activamente resolviendo la tarea.
 - **Pausa por Inactividad:** Si transcurren **60 segundos** sin interacción, el cronómetro interno se detiene y aparece un overlay suave («¡Ánimo, seguimos concentradas!»). Se reanuda al volver a interactuar.
+- **Excepción en Lectura de Detectives (`reading`):** El contador de concentración y la detección de inactividad están **deshabilitados** en este ejercicio para que Ona pueda leer sin interrupciones.
 
 ### 6. Panel de Supervisión («Vista Papá»)
-- Modal discreto (`⚙️`) que expone el historial completo de sesiones, tiempos por tipo de ejercicio, fallos e intervenciones del modo socrático.
+- Modal discreto (`Alt+P`) que expone el historial completo de sesiones, tiempos por tipo de ejercicio, fallos e intervenciones del modo socrático.
+
+### 7. Reparto de Personajes en Lectura de Detectives
+- **Protagonista:** Ona (practica **karate**).
+- **Familia:** Solo **Papá** (divertido y bromista; nunca mamá ni otros familiares).
+- **Mascotas:** Hámsters **Luna** y **Salami**, gato **Fuet**, perro **Pili**.
+- **Amigos:** **Emma** (mejor amiga), **Guillem** (juega a ser novios).
+- **Antagonistas:** **Ariadna** (enemiga) y **Hug** (malvado como Ariadna).
+- **Secundarios:** **Natura**, **Noa Gómez**, **Coral** y la **Profesora Mireia**.
