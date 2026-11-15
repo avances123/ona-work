@@ -1,4 +1,4 @@
-export type ExerciseType = 'calc' | 'mosaic' | 'series' | 'coords' | 'sudoku' | 'crypto' | 'reading';
+export type ExerciseType = 'calc' | 'mosaic' | 'series' | 'coords' | 'sudoku' | 'crypto' | 'reading' | 'vocab';
 
 export interface BaseExercise {
   id: string;
@@ -76,6 +76,15 @@ export interface ReadingExercise extends BaseExercise {
   questions: ReadingQuestion[];
 }
 
+export interface VocabExercise extends BaseExercise {
+  type: 'vocab';
+  word: string;
+  displayWord: string;
+  options: string[];
+  correctDefinition: string;
+  discardedOptions: string[];
+}
+
 export type Exercise =
   | CalcExercise
   | MosaicExercise
@@ -83,5 +92,6 @@ export type Exercise =
   | CoordsExercise
   | SudokuExercise
   | CryptoExercise
-  | ReadingExercise;
+  | ReadingExercise
+  | VocabExercise;
 

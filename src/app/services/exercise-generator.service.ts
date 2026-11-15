@@ -10,8 +10,11 @@ import {
   SeriesExercise,
   SeriesItem,
   SudokuExercise,
+  VocabExercise,
 } from '../models/exercise.model';
 import { DETECTIVE_STORIES } from '../data/detective-stories';
+import { findVocabDefinition, getDistractorDefinitions } from '../data/vocab-definitions';
+import { VocabWordEntry } from './storage.service';
 
 @Injectable({
   providedIn: 'root',
@@ -36,11 +39,27 @@ export class ExerciseGeneratorService {
 
   private readingDeck: number[] = [];
 
-  generateSession(count: number = 10, enabledTypes?: ExerciseType[]): Exercise[] {
+  generateSession(
+    count: number = 10,
+    enabledTypes?: ExerciseType[],
+    vocabPool: VocabWordEntry[] = []
+  ): Exercise[] {
     const exercises: Exercise[] = [];
-    const availableTypes = (enabledTypes && enabledTypes.length > 0)
-      ? enabledTypes
-      : (['calc', 'mosaic', 'sudoku', 'series', 'coords', 'crypto', 'reading'] as ExerciseType[]);
+    const usableVocab = vocabPool
+      .map((entry) => ({ entry, def: findVocabDefinition(entry.word, entry.definition) }))
+      .filter((item): item is { entry: VocabWordEntry; def: string } => item.def !== null);
+
+    let availableTypes = (enabledTypes && enabledTypes.length > 0)
+      ? [...enabledTypes]
+      : (['calc', 'mosaic', 'sudoku', 'series', 'coords', 'crypto', 'reading', 'vocab'] as ExerciseType[]);
+
+    // Si no hay palabras pendientes con definición, el ejercicio de vocabulario NO sale
+    if (usableVocab.length === 0) {
+      availableTypes = availableTypes.filter((t) => t !== 'vocab');
+      if (availableTypes.length === 0) {
+        availableTypes = ['calc', 'reading'];
+      }
+    }
 
     for (let i = 0; i < count; i++) {
       const type = availableTypes[i % availableTypes.length];
@@ -67,6 +86,9 @@ export class ExerciseGeneratorService {
           break;
         case 'reading':
           exercises.push(this.generateReading(id));
+          break;
+        case 'vocab':
+          exercises.push(this.generateVocab(id, usableVocab));
           break;
       }
     }
@@ -469,6 +491,27 @@ export class ExerciseGeneratorService {
       caseTitle: story.caseTitle,
       sentences: story.sentences,
       questions: shuffledQuestions,
+    };
+  }
+
+  private generateVocab(
+    id: string,
+    usableVocab: { entry: VocabWordEntry; def: string }[]
+  ): VocabExercise {
+    const picked = usableVocab[Math.floor(Math.random() * usableVocab.length)];
+    const distractors = getDistractorDefinitions(picked.def, 2);
+    const options = [picked.def, ...distractors].sort(() => Math.random() - 0.5);
+
+    return {
+      id,
+      type: 'vocab',
+      title: 'Vocabulario',
+      instructions: 'Elige la definición correcta de la palabra que aprendiste.',
+      word: picked.entry.word,
+      displayWord: picked.entry.displayWord,
+      options,
+      correctDefinition: picked.def,
+      discardedOptions: [],
     };
   }
 }

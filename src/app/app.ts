@@ -14,10 +14,12 @@ import {
   SeriesExercise,
   SeriesItem,
   SudokuExercise,
+  VocabExercise,
 } from './models/exercise.model';
 import { ExerciseResult, SessionRecord } from './models/session.model';
 import { ParentDashboardComponent } from './components/parent-dashboard/parent-dashboard.component';
 import { DETECTIVE_STORIES } from './data/detective-stories';
+import { normalizeVocabWord } from './data/vocab-definitions';
 
 @Component({
   selector: 'app-root',
@@ -227,7 +229,7 @@ import { DETECTIVE_STORIES } from './data/detective-stories';
               </div>
             </div>
 
-            <div class="reading-story-box">
+            <div class="reading-story-box" (mouseup)="onStoryTextSelect()" (touchend)="onStoryTextSelect()">
               <p class="reading-story-paragraph">
                 <span
                   *ngFor="let sentence of asReading(currentExercise()).sentences; let idx = index"
@@ -235,6 +237,27 @@ import { DETECTIVE_STORIES } from './data/detective-stories';
                   [class.clue-highlight]="readingClueActive() && idx === currentReadingQuestion()?.clueSentenceIndex"
                 >{{ sentence }} </span>
               </p>
+            </div>
+
+            <div
+              *ngIf="vocabPopupWord() as selectedWord"
+              class="vocab-selection-popup"
+              [style.top.px]="vocabPopupPos().top"
+              [style.left.px]="vocabPopupPos().left"
+              (mousedown)="$event.stopPropagation()"
+            >
+              <span class="vocab-popup-word">«{{ selectedWord }}»</span>
+              <button
+                *ngIf="!vocabPopupSaved()"
+                class="vocab-add-btn"
+                (click)="onLearnSelectedWord()"
+              >
+                Acabo de aprender esta palabra
+              </button>
+              <span *ngIf="vocabPopupSaved()" class="vocab-saved-badge">
+                ✓ Añadida a Vocabulario
+              </span>
+              <button class="vocab-popup-close" (click)="closeVocabPopup()" aria-label="Cerrar">✕</button>
             </div>
 
             <div *ngIf="!readingCaseSolved() && currentReadingQuestion() as rq" class="reading-question-area">
@@ -259,6 +282,28 @@ import { DETECTIVE_STORIES } from './data/detective-stories';
               <div class="reading-solved-msg">🕵️‍♀️ ¡Caso resuelto, detective!</div>
               <button class="reading-next-btn" (click)="advanceFromReading()">
                 Siguiente ejercicio →
+              </button>
+            </div>
+          </div>
+
+          <!-- 8. BLOQUE VOCABULARIO -->
+          <div *ngIf="currentExercise().type === 'vocab'" class="vocab-block">
+            <div class="vocab-word-card">
+              <span class="vocab-word-text">{{ asVocab(currentExercise()).displayWord }}</span>
+              <span class="vocab-streak-pill">
+                Racha: {{ getVocabStreak(asVocab(currentExercise()).word) }} / 3
+              </span>
+            </div>
+
+            <div class="reading-options vocab-options">
+              <button
+                *ngFor="let opt of asVocab(currentExercise()).options"
+                class="reading-option-btn vocab-option-btn"
+                [disabled]="asVocab(currentExercise()).discardedOptions.includes(opt)"
+                [class.discarded]="asVocab(currentExercise()).discardedOptions.includes(opt)"
+                (click)="onVocabAnswer(opt)"
+              >
+                {{ opt }}
               </button>
             </div>
           </div>
@@ -844,6 +889,12 @@ export class App implements OnInit, OnDestroy {
     title: s.caseTitle,
   }));
 
+  // Vocabulario (captura desde relatos)
+  public readonly vocabPopupWord = signal<string | null>(null);
+  public readonly vocabPopupSaved = signal<boolean>(false);
+  public readonly vocabPopupPos = signal<{ top: number; left: number }>({ top: 160, left: 200 });
+  private vocabPopupTimer: any = null;
+
   private sessionStartTime: string = '';
   private recordedResults: ExerciseResult[] = [];
 
@@ -878,7 +929,9 @@ export class App implements OnInit, OnDestroy {
     this.recordedResults = [];
     const enabled = this.storage.enabledTypes();
     const targetCount = this.storage.exerciseCount();
-    this.exercises.set(this.generator.generateSession(targetCount, enabled));
+    this.exercises.set(
+      this.generator.generateSession(targetCount, enabled, this.storage.vocabWords())
+    );
     this.currentExerciseIndex.set(0);
     this.sessionFinished.set(false);
     this.initCurrentExercise();
@@ -896,6 +949,7 @@ export class App implements OnInit, OnDestroy {
     this.readingDiscardedOptions.set([]);
     this.readingClueActive.set(false);
     this.readingCaseSolved.set(false);
+    this.closeVocabPopup();
 
     const current = this.currentExercise();
     if (current && current.type === 'mosaic') {
@@ -1122,7 +1176,11 @@ export class App implements OnInit, OnDestroy {
 
     // Regenerar los restantes para que se ajusten a los tipos seleccionados
     const remainingCount = currentList.length - currentIndex;
-    const newRemaining = this.generator.generateSession(remainingCount, enabled);
+    const newRemaining = this.generator.generateSession(
+      remainingCount,
+      enabled,
+      this.storage.vocabWords()
+    );
 
     const updated = [...completed, ...newRemaining];
     this.exercises.set(updated);
@@ -1154,6 +1212,7 @@ export class App implements OnInit, OnDestroy {
     this.readingDiscardedOptions.set([]);
     this.readingClueActive.set(false);
     this.readingCaseSolved.set(false);
+    this.closeVocabPopup();
   }
 
   currentReadingQuestion(): ReadingQuestion | null {
@@ -1192,6 +1251,82 @@ export class App implements OnInit, OnDestroy {
     this.handleExerciseSuccess();
   }
 
+  // --- Selección de palabra en relato -> Vocabulario ---
+  onStoryTextSelect(): void {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) {
+      this.closeVocabPopup();
+      return;
+    }
+
+    const rawText = sel.toString().trim();
+    const cleaned = normalizeVocabWord(rawText);
+    // Solo si es exactamente UNA palabra (solo letras, sin espacios) y de al menos 2 letras
+    const isSingleWord = cleaned.length >= 2 && /^[a-záéíóúüñ]+$/i.test(cleaned);
+    if (!isSingleWord) {
+      this.closeVocabPopup();
+      return;
+    }
+
+    const range = sel.getRangeAt(0);
+    const rect = range.getBoundingClientRect();
+    const top = rect.height > 0 ? Math.max(12, rect.top - 54) : 140;
+    const left = rect.width > 0
+      ? Math.min(Math.max(16, rect.left + rect.width / 2 - 140), window.innerWidth - 300)
+      : Math.max(16, window.innerWidth / 2 - 140);
+
+    if (this.vocabPopupTimer) {
+      clearTimeout(this.vocabPopupTimer);
+      this.vocabPopupTimer = null;
+    }
+    this.vocabPopupWord.set(cleaned);
+    this.vocabPopupSaved.set(false);
+    this.vocabPopupPos.set({ top, left });
+  }
+
+  onLearnSelectedWord(): void {
+    const word = this.vocabPopupWord();
+    if (!word) return;
+
+    this.storage.addVocabWord(word);
+    this.vocabPopupSaved.set(true);
+    window.getSelection()?.removeAllRanges();
+
+    if (this.vocabPopupTimer) clearTimeout(this.vocabPopupTimer);
+    this.vocabPopupTimer = setTimeout(() => {
+      this.closeVocabPopup();
+    }, 1200);
+  }
+
+  closeVocabPopup(): void {
+    if (this.vocabPopupTimer) {
+      clearTimeout(this.vocabPopupTimer);
+      this.vocabPopupTimer = null;
+    }
+    this.vocabPopupWord.set(null);
+    this.vocabPopupSaved.set(false);
+  }
+
+  // --- Vocabulario ---
+  getVocabStreak(word: string): number {
+    const found = this.storage.vocabWords().find((w) => w.word === word);
+    return found ? found.streak : 0;
+  }
+
+  onVocabAnswer(selected: string): void {
+    const current = this.currentExercise() as VocabExercise;
+    if (selected === current.correctDefinition) {
+      this.storage.recordVocabAttempt(current.word, this.currentAttempts() === 1);
+      this.handleExerciseSuccess();
+    } else {
+      this.currentAttempts.update((a) => a + 1);
+      this.socraticFeedback.set(true);
+      if (!current.discardedOptions.includes(selected)) {
+        current.discardedOptions = [...current.discardedOptions, selected];
+      }
+    }
+  }
+
   asCalc(e: Exercise): CalcExercise {
     return e as CalcExercise;
   }
@@ -1209,5 +1344,8 @@ export class App implements OnInit, OnDestroy {
   }
   asReading(e: Exercise): ReadingExercise {
     return e as ReadingExercise;
+  }
+  asVocab(e: Exercise): VocabExercise {
+    return e as VocabExercise;
   }
 }

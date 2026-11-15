@@ -2,6 +2,7 @@ import { Component, computed, inject, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { StorageService } from '../../services/storage.service';
 import { ExerciseType } from '../../models/exercise.model';
+import { findVocabDefinition } from '../../data/vocab-definitions';
 
 @Component({
   selector: 'app-parent-dashboard',
@@ -52,6 +53,27 @@ import { ExerciseType } from '../../models/exercise.model';
               />
               <span class="type-name">{{ t.label }}</span>
             </label>
+          </div>
+        </section>
+
+        <section class="vocab-config">
+          <h3>Vocabulario en Práctica ({{ vocabWords().length }})</h3>
+          <div *ngIf="vocabWords().length === 0" class="empty-msg">
+            No hay palabras pendientes. El ejercicio de Vocabulario no aparecerá hasta que Ona seleccione una palabra en un relato.
+          </div>
+          <div *ngFor="let w of vocabWords()" class="vocab-item">
+            <div class="vocab-item-top">
+              <strong>{{ w.displayWord }}</strong>
+              <span class="vocab-streak-badge">Racha: {{ w.streak }}/3</span>
+              <button class="vocab-del-btn" (click)="removeVocab(w.word)" title="Eliminar palabra">✕</button>
+            </div>
+            <input
+              type="text"
+              class="vocab-def-input"
+              [value]="getVocabDefPreview(w.word, w.definition)"
+              placeholder="Añade una definición corta para esta palabra..."
+              (change)="onVocabDefChange(w.word, $event)"
+            />
           </div>
         </section>
 
@@ -396,6 +418,57 @@ import { ExerciseType } from '../../models/exercise.model';
         font-weight: 600;
         cursor: pointer;
       }
+      .vocab-config {
+        padding: 12px 24px;
+        border-bottom: 1px solid #e2e8f0;
+        max-height: 180px;
+        overflow-y: auto;
+      }
+      .vocab-config h3 {
+        margin: 0 0 8px 0;
+        font-size: 0.95rem;
+      }
+      .vocab-item {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        padding: 8px 10px;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        margin-bottom: 6px;
+        background: #f8fafc;
+      }
+      .vocab-item-top {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .vocab-streak-badge {
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #0369a1;
+        background: #e0f2fe;
+        padding: 2px 8px;
+        border-radius: 999px;
+      }
+      .vocab-del-btn {
+        margin-left: auto;
+        background: none;
+        border: none;
+        color: #94a3b8;
+        cursor: pointer;
+        font-weight: 700;
+      }
+      .vocab-del-btn:hover {
+        color: #dc2626;
+      }
+      .vocab-def-input {
+        width: 100%;
+        padding: 4px 8px;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        font-size: 0.85rem;
+      }
     `,
   ],
 })
@@ -404,6 +477,7 @@ export class ParentDashboardComponent {
   public readonly sessions = this.storage.sessions;
   public readonly enabledTypes = this.storage.enabledTypes;
   public readonly exerciseCount = this.storage.exerciseCount;
+  public readonly vocabWords = this.storage.vocabWords;
 
   public readonly availableExerciseTypes: { id: ExerciseType; label: string }[] = [
     { id: 'calc', label: 'Cálculo' },
@@ -413,6 +487,7 @@ export class ParentDashboardComponent {
     { id: 'coords', label: 'Coordenadas' },
     { id: 'crypto', label: 'Criptogramas' },
     { id: 'reading', label: 'Lectura (Detectives)' },
+    { id: 'vocab', label: 'Vocabulario' },
   ];
 
   public totalSessions = computed(() => this.sessions().length);
@@ -467,6 +542,19 @@ export class ParentDashboardComponent {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}m ${secs}s`;
+  }
+
+  getVocabDefPreview(word: string, customDef?: string): string {
+    return findVocabDefinition(word, customDef) ?? '';
+  }
+
+  onVocabDefChange(word: string, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.storage.updateVocabDefinition(word, input.value);
+  }
+
+  removeVocab(word: string): void {
+    this.storage.removeVocabWord(word);
   }
 
   clearAll(): void {

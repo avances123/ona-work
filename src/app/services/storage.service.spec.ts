@@ -59,4 +59,29 @@ describe('StorageService export/import', () => {
     expect(service.importData({ foo: 'bar' }).ok).toBe(false);
     expect(service.importData({ sessions: 'not-an-array', enabledTypes: ['calc'], exerciseCount: 5 }).ok).toBe(false);
   });
+
+  it('should add vocab words without duplicates and remove after 3 consecutive first-try successes', () => {
+    const add1 = service.addVocabWord('¡Brillante!');
+    expect(add1.added).toBe(true);
+    expect(add1.word).toBe('brillante');
+    expect(service.vocabWords().length).toBe(1);
+
+    const addDup = service.addVocabWord('brillante');
+    expect(addDup.added).toBe(false);
+    expect(service.vocabWords().length).toBe(1);
+
+    // 2 aciertos seguidos -> sigue en la lista con racha 2
+    expect(service.recordVocabAttempt('brillante', true)).toEqual({ learned: false, newStreak: 1 });
+    expect(service.recordVocabAttempt('brillante', true)).toEqual({ learned: false, newStreak: 2 });
+
+    // Un fallo -> resetea la racha a 0
+    expect(service.recordVocabAttempt('brillante', false)).toEqual({ learned: false, newStreak: 0 });
+    expect(service.vocabWords()[0].streak).toBe(0);
+
+    // 3 aciertos seguidos -> aprendida y eliminada
+    expect(service.recordVocabAttempt('brillante', true)).toEqual({ learned: false, newStreak: 1 });
+    expect(service.recordVocabAttempt('brillante', true)).toEqual({ learned: false, newStreak: 2 });
+    expect(service.recordVocabAttempt('brillante', true)).toEqual({ learned: true, newStreak: 3 });
+    expect(service.vocabWords().length).toBe(0);
+  });
 });

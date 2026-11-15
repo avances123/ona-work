@@ -316,4 +316,110 @@ test.describe('Ona Work - Flujos E2E y Modo Papá', () => {
     await page.locator('button.restart-session-btn').click();
     await expect(page.locator('.exercise-indicator')).toContainText('de 12');
   });
+
+  test('Vocabulario: captura palabra única en relato, 3 definiciones, y se elimina tras 3 aciertos seguidos', async ({ page }) => {
+    await page.goto('/');
+
+    // 1. Sin palabras guardadas, aunque solo esté marcado Vocabulario no debe salir Vocabulario
+    await page.keyboard.press('Alt+KeyP');
+    await expect(page.locator('.dashboard-modal')).toBeVisible();
+    await expect(page.locator('.vocab-config')).toContainText('Vocabulario en Práctica (0)');
+
+    const checkboxes = page.locator('.type-checkbox-label input[type="checkbox"]');
+    const count = await checkboxes.count();
+    for (let i = 0; i < count; i++) {
+      const box = checkboxes.nth(i);
+      const isChecked = await box.isChecked();
+      const label = await page.locator('.type-checkbox-label').nth(i).innerText();
+      if (!label.includes('Lectura') && isChecked) {
+        await box.click();
+      } else if (label.includes('Lectura') && !isChecked) {
+        await box.click();
+      }
+    }
+    await page.locator('button.restart-session-btn').click();
+
+    // 2. Ir al Caso 31 y probar selección de dos palabras (no debe abrir popup)
+    await page.locator('.reading-story-select').selectOption('30');
+    await expect(page.locator('.reading-case-title')).toContainText('Caso 31:');
+
+    await page.evaluate(() => {
+      const span = document.querySelector('.story-sentence');
+      if (!span || !span.firstChild) return;
+      const text = span.firstChild.textContent || '';
+      const idx = text.indexOf('miércoles por');
+      const range = document.createRange();
+      range.setStart(span.firstChild, idx);
+      range.setEnd(span.firstChild, idx + 'miércoles por'.length);
+      const sel = window.getSelection();
+      sel?.removeAllRanges();
+      sel?.addRange(range);
+    });
+    await page.locator('.reading-story-box').dispatchEvent('mouseup');
+    await expect(page.locator('.vocab-selection-popup')).toHaveCount(0);
+
+    // 3. Seleccionar una sola palabra ("cinturón") -> aparece popup y se guarda
+    await page.evaluate(() => {
+      const spans = document.querySelectorAll('.story-sentence');
+      for (const span of spans) {
+        const node = span.firstChild;
+        const text = node?.textContent || '';
+        const idx = text.indexOf('cinturón');
+        if (node && idx >= 0) {
+          const range = document.createRange();
+          range.setStart(node, idx);
+          range.setEnd(node, idx + 'cinturón'.length);
+          const sel = window.getSelection();
+          sel?.removeAllRanges();
+          sel?.addRange(range);
+          break;
+        }
+      }
+    });
+    await page.locator('.reading-story-box').dispatchEvent('mouseup');
+    await expect(page.locator('.vocab-selection-popup')).toBeVisible();
+    await expect(page.locator('.vocab-add-btn')).toContainText('Acabo de aprender esta palabra');
+    await page.locator('.vocab-add-btn').click();
+    await expect(page.locator('.vocab-saved-badge')).toBeVisible();
+
+    // 4. Configurar sesión solo de Vocabulario (3 ejercicios) y acertar 3 veces seguidas
+    await page.keyboard.press('Alt+KeyP');
+    await expect(page.locator('.vocab-config')).toContainText('Vocabulario en Práctica (1)');
+    await expect(page.locator('.vocab-config')).toContainText('cinturón');
+
+    await page.locator('input.exercise-count-input').fill('3');
+    // Primero marcar Vocabulario para que no quede 0 tipos seleccionados al desmarcar Lectura
+    for (let i = 0; i < count; i++) {
+      const box = checkboxes.nth(i);
+      const label = await page.locator('.type-checkbox-label').nth(i).innerText();
+      if (label.includes('Vocabulario') && !(await box.isChecked())) {
+        await box.click();
+      }
+    }
+    for (let i = 0; i < count; i++) {
+      const box = checkboxes.nth(i);
+      const label = await page.locator('.type-checkbox-label').nth(i).innerText();
+      if (!label.includes('Vocabulario') && (await box.isChecked())) {
+        await box.click();
+      }
+    }
+    await page.locator('button.restart-session-btn').click();
+
+    for (let step = 0; step < 3; step++) {
+      await expect(page.locator('.exercise-type-tag')).toContainText('Vocabulario');
+      await expect(page.locator('.vocab-word-text')).toHaveText('cinturón');
+      await expect(page.locator('.vocab-streak-pill')).toContainText(`Racha: ${step} / 3`);
+      await expect(page.locator('.vocab-option-btn')).toHaveCount(3);
+      await page.locator('.vocab-option-btn', { hasText: 'cintura' }).click();
+    }
+
+    // 5. Sesión completada y palabra eliminada del listado (aprendida)
+    await expect(page.locator('.finished-card')).toBeVisible();
+    await page.keyboard.press('Alt+KeyP');
+    await expect(page.locator('.vocab-config')).toContainText('Vocabulario en Práctica (0)');
+
+    // 6. Al reiniciar solo con Vocabulario sin palabras, no sale Vocabulario
+    await page.locator('button.restart-session-btn').click();
+    await expect(page.locator('.exercise-type-tag')).not.toContainText('Vocabulario');
+  });
 });
