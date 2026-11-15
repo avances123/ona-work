@@ -6,10 +6,12 @@ import {
   Exercise,
   ExerciseType,
   MosaicExercise,
+  ReadingExercise,
   SeriesExercise,
   SeriesItem,
   SudokuExercise,
 } from '../models/exercise.model';
+import { DETECTIVE_STORIES } from '../data/detective-stories';
 
 @Injectable({
   providedIn: 'root',
@@ -32,11 +34,13 @@ export class ExerciseGeneratorService {
     { code: '#0f172a', name: 'negro' },
   ];
 
+  private readingDeck: number[] = [];
+
   generateSession(count: number = 10, enabledTypes?: ExerciseType[]): Exercise[] {
     const exercises: Exercise[] = [];
     const availableTypes = (enabledTypes && enabledTypes.length > 0)
       ? enabledTypes
-      : (['calc', 'mosaic', 'sudoku', 'series', 'coords', 'crypto'] as ExerciseType[]);
+      : (['calc', 'mosaic', 'sudoku', 'series', 'coords', 'crypto', 'reading'] as ExerciseType[]);
 
     for (let i = 0; i < count; i++) {
       const type = availableTypes[i % availableTypes.length];
@@ -60,6 +64,9 @@ export class ExerciseGeneratorService {
           break;
         case 'crypto':
           exercises.push(this.generateCrypto(id));
+          break;
+        case 'reading':
+          exercises.push(this.generateReading(id));
           break;
       }
     }
@@ -422,5 +429,41 @@ export class ExerciseGeneratorService {
 
     solve([...grid], 0);
     return solutionsCount;
+  }
+
+  // 7. Comprensión Lectora (Detectives)
+  private generateReading(id: string): ReadingExercise {
+    if (this.readingDeck.length === 0) {
+      this.readingDeck = Array.from({ length: DETECTIVE_STORIES.length }, (_, idx) => idx);
+      for (let i = this.readingDeck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [this.readingDeck[i], this.readingDeck[j]] = [this.readingDeck[j], this.readingDeck[i]];
+      }
+    }
+
+    const storyIndex = this.readingDeck.pop()!;
+    const story = DETECTIVE_STORIES[storyIndex];
+
+    const shuffledQuestions = story.questions.map((q) => {
+      const opts = [...q.options];
+      for (let i = opts.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [opts[i], opts[j]] = [opts[j], opts[i]];
+      }
+      return {
+        ...q,
+        options: opts,
+      };
+    });
+
+    return {
+      id,
+      type: 'reading',
+      title: 'Lectura de Detectives',
+      instructions: 'Lee la historia con atención y resuelve las pistas.',
+      caseTitle: story.caseTitle,
+      sentences: story.sentences,
+      questions: shuffledQuestions,
+    };
   }
 }

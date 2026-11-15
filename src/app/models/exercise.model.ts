@@ -1,4 +1,4 @@
-export type ExerciseType = 'calc' | 'mosaic' | 'series' | 'coords' | 'sudoku' | 'crypto';
+export type ExerciseType = 'calc' | 'mosaic' | 'series' | 'coords' | 'sudoku' | 'crypto' | 'reading';
 
 export interface BaseExercise {
   id: string;
@@ -62,11 +62,26 @@ export interface CryptoExercise extends BaseExercise {
   discardedOption?: number;
 }
 
+export interface ReadingQuestion {
+  question: string;
+  options: string[];
+  correctAnswer: string;
+  clueSentenceIndex: number;
+}
+
+export interface ReadingExercise extends BaseExercise {
+  type: 'reading';
+  caseTitle: string;
+  sentences: string[];
+  questions: ReadingQuestion[];
+}
+
 export type Exercise =
   | CalcExercise
   | MosaicExercise
   | SeriesExercise
   | CoordsExercise
   | SudokuExercise
-  | CryptoExercise;
+  | CryptoExercise
+  | ReadingExercise;
 

@@ -177,4 +177,60 @@ test.describe('Ona Work - Flujos E2E y Modo Papá', () => {
     const text = await countdown.innerText();
     expect(text).toMatch(/Memoriza: (10|9)s/);
   });
+
+  test('El ejercicio de Lectura (Detectives) muestra historia, pista socrática y avanza de ejercicio', async ({ page }) => {
+    await page.goto('/');
+
+    // 1. Abrir panel con Alt+P y filtrar solo Lectura (Detectives)
+    await page.keyboard.press('Alt+KeyP');
+    await expect(page.locator('.dashboard-modal')).toBeVisible();
+
+    const checkboxes = page.locator('.type-checkbox-label input[type="checkbox"]');
+    const count = await checkboxes.count();
+    for (let i = 0; i < count; i++) {
+      const box = checkboxes.nth(i);
+      const isChecked = await box.isChecked();
+      const label = await page.locator('.type-checkbox-label').nth(i).innerText();
+      if (!label.includes('Lectura') && isChecked) {
+        await box.click();
+      } else if (label.includes('Lectura') && !isChecked) {
+        await box.click();
+      }
+    }
+
+    await page.locator('button.restart-session-btn').click();
+    await expect(page.locator('.dashboard-modal')).not.toBeVisible();
+
+    // 2. Verificar historia y preguntas
+    await expect(page.locator('.exercise-type-tag')).toContainText('Lectura de Detectives');
+    await expect(page.locator('.reading-case-title')).toBeVisible();
+    const sentenceCount = await page.locator('.story-sentence').count();
+    expect(sentenceCount).toBeGreaterThanOrEqual(10);
+
+    // 3. Resolver las 2 pistas del caso (probando opciones hasta acertar ambas)
+    for (let q = 0; q < 2; q++) {
+      await expect(page.locator('.reading-question-header')).toContainText(`Pista ${q + 1} de 2`, { ignoreCase: true });
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const enabledBtns = page.locator('.reading-option-btn:not(:disabled)');
+        await enabledBtns.first().click();
+
+        // Esperar a que avance de pista/ejercicio o muestre el feedback socrático
+        await expect(async () => {
+          const errVisible = await page.locator('.error-notice').isVisible();
+          const header = (await page.locator('.reading-question-header').innerText()).toLowerCase();
+          const indicator = await page.locator('.exercise-indicator').innerText();
+          const advanced = (q === 0 && header.includes('pista 2 de 2')) || (q === 1 && indicator.includes('Ejercicio 2 de'));
+          expect(errVisible || advanced).toBe(true);
+        }).toPass({ timeout: 3000 });
+
+        if (await page.locator('.error-notice').isVisible()) {
+          await expect(page.locator('.story-sentence.clue-highlight')).toHaveCount(1);
+        } else {
+          break;
+        }
+      }
+    }
+
+    await expect(page.locator('.exercise-indicator')).toContainText('Ejercicio 2 de');
+  });
 });

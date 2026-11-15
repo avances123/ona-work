@@ -9,6 +9,8 @@ import {
   CryptoExercise,
   Exercise,
   MosaicExercise,
+  ReadingExercise,
+  ReadingQuestion,
   SeriesExercise,
   SeriesItem,
   SudokuExercise,
@@ -202,6 +204,39 @@ import { ParentDashboardComponent } from './components/parent-dashboard/parent-d
               >
                 {{ opt }}
               </button>
+            </div>
+          </div>
+
+          <!-- 7. BLOQUE COMPRENSIÓN LECTORA (DETECTIVES) -->
+          <div *ngIf="currentExercise().type === 'reading'" class="reading-block">
+            <div class="reading-case-title">🔍 {{ asReading(currentExercise()).caseTitle }}</div>
+
+            <div class="reading-story-box">
+              <p class="reading-story-paragraph">
+                <span
+                  *ngFor="let sentence of asReading(currentExercise()).sentences; let idx = index"
+                  class="story-sentence"
+                  [class.clue-highlight]="readingClueActive() && idx === currentReadingQuestion()?.clueSentenceIndex"
+                >{{ sentence }} </span>
+              </p>
+            </div>
+
+            <div *ngIf="currentReadingQuestion() as rq" class="reading-question-area">
+              <div class="reading-question-header">
+                Pista {{ readingQuestionIndex() + 1 }} de {{ asReading(currentExercise()).questions.length }}
+              </div>
+              <div class="reading-question-text">{{ rq.question }}</div>
+              <div class="reading-options">
+                <button
+                  *ngFor="let opt of rq.options"
+                  class="reading-option-btn"
+                  [disabled]="readingDiscardedOptions().includes(opt)"
+                  [class.discarded]="readingDiscardedOptions().includes(opt)"
+                  (click)="onReadingAnswer(opt)"
+                >
+                  {{ opt }}
+                </button>
+              </div>
             </div>
           </div>
 
@@ -776,6 +811,11 @@ export class App implements OnInit, OnDestroy {
   public readonly rows = [8, 7, 6, 5, 4, 3, 2, 1];
   public readonly highlightedCoordsAxis = signal<'col' | 'row' | null>(null);
 
+  // Comprensión Lectora (Detectives)
+  public readonly readingQuestionIndex = signal<number>(0);
+  public readonly readingDiscardedOptions = signal<string[]>([]);
+  public readonly readingClueActive = signal<boolean>(false);
+
   private sessionStartTime: string = '';
   private recordedResults: ExerciseResult[] = [];
 
@@ -824,6 +864,9 @@ export class App implements OnInit, OnDestroy {
     this.selectedCells.set([]);
     this.isFlashingHint.set(false);
     this.selectedSudokuCell.set(null);
+    this.readingQuestionIndex.set(0);
+    this.readingDiscardedOptions.set([]);
+    this.readingClueActive.set(false);
 
     const current = this.currentExercise();
     if (current && current.type === 'mosaic') {
@@ -1054,6 +1097,38 @@ export class App implements OnInit, OnDestroy {
     this.initCurrentExercise();
   }
 
+  // --- Comprensión Lectora (Detectives) ---
+  currentReadingQuestion(): ReadingQuestion | null {
+    const current = this.currentExercise();
+    if (!current || current.type !== 'reading') return null;
+    return current.questions[this.readingQuestionIndex()] ?? null;
+  }
+
+  onReadingAnswer(selected: string): void {
+    const current = this.currentExercise() as ReadingExercise;
+    const q = this.currentReadingQuestion();
+    if (!q) return;
+
+    if (selected === q.correctAnswer) {
+      this.socraticFeedback.set(false);
+      this.readingClueActive.set(false);
+      this.readingDiscardedOptions.set([]);
+
+      if (this.readingQuestionIndex() + 1 < current.questions.length) {
+        this.readingQuestionIndex.update((i) => i + 1);
+      } else {
+        this.handleExerciseSuccess();
+      }
+    } else {
+      this.currentAttempts.update((a) => a + 1);
+      this.socraticFeedback.set(true);
+      this.readingClueActive.set(true);
+      this.readingDiscardedOptions.update((list) =>
+        list.includes(selected) ? list : [...list, selected]
+      );
+    }
+  }
+
   asCalc(e: Exercise): CalcExercise {
     return e as CalcExercise;
   }
@@ -1068,5 +1143,8 @@ export class App implements OnInit, OnDestroy {
   }
   asCrypto(e: Exercise): CryptoExercise {
     return e as CryptoExercise;
+  }
+  asReading(e: Exercise): ReadingExercise {
+    return e as ReadingExercise;
   }
 }

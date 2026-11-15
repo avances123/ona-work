@@ -363,6 +363,7 @@ export class ParentDashboardComponent {
     { id: 'series', label: 'Series Visuales' },
     { id: 'coords', label: 'Coordenadas' },
     { id: 'crypto', label: 'Criptogramas' },
+    { id: 'reading', label: 'Lectura (Detectives)' },
   ];
 
   public totalSessions = computed(() => this.sessions().length);

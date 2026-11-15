@@ -6,7 +6,7 @@ const STORAGE_KEY = 'ona_work_sessions_history';
 const SETTINGS_KEY = 'ona_work_enabled_types';
 const EXERCISE_COUNT_KEY = 'ona_work_exercise_count';
 
-const DEFAULT_TYPES: ExerciseType[] = ['calc', 'mosaic', 'sudoku', 'series', 'coords', 'crypto'];
+const DEFAULT_TYPES: ExerciseType[] = ['calc', 'mosaic', 'sudoku', 'series', 'coords', 'crypto', 'reading'];
 const DEFAULT_EXERCISE_COUNT = 10;
 
 @Injectable({
