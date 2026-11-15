@@ -104,24 +104,43 @@ html, body {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+  justify-content: center;
+  gap: 8px;
   width: 100%;
 }
-.reading-story-select {
-  max-width: 260px;
-  padding: 6px 12px;
-  border-radius: 10px;
+.reading-story-picker {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
   border: 2px solid #bae6fd;
-  background: #f0f9ff;
+  background: #e0f2fe;
   color: #0369a1;
-  font-size: 0.9rem;
-  font-weight: 600;
   cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
 }
-.reading-story-select:focus {
-  outline: none;
+.reading-story-picker:hover,
+.reading-story-picker:focus-within {
+  background: #bae6fd;
   border-color: #0284c7;
+}
+.reading-story-arrow {
+  font-size: 1rem;
+  line-height: 1;
+  pointer-events: none;
+}
+.reading-story-select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  font-size: 0.95rem;
 }
 .reading-solved-area {
   display: flex;

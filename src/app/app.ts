@@ -212,16 +212,19 @@ import { DETECTIVE_STORIES } from './data/detective-stories';
           <div *ngIf="currentExercise().type === 'reading'" class="reading-block">
             <div class="reading-header-row">
               <div class="reading-case-title">🔍 {{ asReading(currentExercise()).caseTitle }}</div>
-              <select
-                class="reading-story-select"
-                aria-label="Elegir relato"
-                [value]="currentReadingStoryIndex()"
-                (change)="onSelectReadingStory($any($event.target).value)"
-              >
-                <option *ngFor="let item of readingStoryTitles" [value]="item.index">
-                  {{ item.title }}
-                </option>
-              </select>
+              <div class="reading-story-picker" title="Elegir relato">
+                <span class="reading-story-arrow" aria-hidden="true">▾</span>
+                <select
+                  class="reading-story-select"
+                  aria-label="Elegir relato"
+                  [value]="currentReadingStoryIndex()"
+                  (change)="onSelectReadingStory($any($event.target).value)"
+                >
+                  <option *ngFor="let item of readingStoryTitles" [value]="item.index">
+                    {{ item.title }}
+                  </option>
+                </select>
+              </div>
             </div>
 
             <div class="reading-story-box">

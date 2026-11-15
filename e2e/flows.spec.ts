@@ -219,23 +219,25 @@ test.describe('Ona Work - Flujos E2E y Modo Papá', () => {
     for (let q = 0; q < 3; q++) {
       await expect(page.locator('.reading-question-header')).toContainText(`Pista ${q + 1} de 3`, { ignoreCase: true });
       for (let attempt = 0; attempt < 3; attempt++) {
+        const prevDisabled = await page.locator('.reading-option-btn:disabled').count();
         const enabledBtns = page.locator('.reading-option-btn:not(:disabled)');
         await enabledBtns.first().click();
 
+        let didAdvance = false;
         await expect(async () => {
-          const errVisible = await page.locator('.error-notice').isVisible();
+          const disabledNow = await page.locator('.reading-option-btn:disabled').count();
           const nextBtnVisible = await page.locator('.reading-next-btn').isVisible();
           const headerVisible = await page.locator('.reading-question-header').isVisible();
           const header = headerVisible ? (await page.locator('.reading-question-header').innerText()).toLowerCase() : '';
-          const advanced = (q < 2 && header.includes(`pista ${q + 2} de 3`)) || (q === 2 && nextBtnVisible);
-          expect(errVisible || advanced).toBe(true);
-        }).toPass({ timeout: 3000 });
+          didAdvance = (q < 2 && header.includes(`pista ${q + 2} de 3`)) || (q === 2 && nextBtnVisible);
+          expect(disabledNow > prevDisabled || didAdvance).toBe(true);
+        }).toPass({ timeout: 5000 });
 
-        if (await page.locator('.error-notice').isVisible()) {
-          await expect(page.locator('.story-sentence.clue-highlight')).toHaveCount(1);
-        } else {
+        if (didAdvance) {
           break;
         }
+        await expect(page.locator('.error-notice')).toBeVisible();
+        await expect(page.locator('.story-sentence.clue-highlight')).toHaveCount(1);
       }
     }
 
