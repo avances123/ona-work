@@ -335,7 +335,7 @@ test.describe('Ona Work - Flujos E2E y Modo Papá', () => {
     // 1. Sin palabras guardadas, aunque solo esté marcado Vocabulario no debe salir Vocabulario
     await page.keyboard.press('Alt+KeyP');
     await expect(page.locator('.dashboard-modal')).toBeVisible();
-    await expect(page.locator('.vocab-config')).toContainText('Vocabulario en Práctica (0)');
+    await expect(page.locator('button.vocab-tab')).toContainText('Vocabulario en Práctica (0)');
 
     const checkboxes = page.locator('.type-checkbox-label input[type="checkbox"]');
     const count = await checkboxes.count();
@@ -396,8 +396,13 @@ test.describe('Ona Work - Flujos E2E y Modo Papá', () => {
 
     // 4. Configurar sesión solo de Vocabulario (3 ejercicios) y acertar 3 veces seguidas
     await page.keyboard.press('Alt+KeyP');
-    await expect(page.locator('.vocab-config')).toContainText('Vocabulario en Práctica (1)');
+    await expect(page.locator('button.vocab-tab')).toContainText('Vocabulario en Práctica (1)');
+    await page.locator('button.vocab-tab').click();
     await expect(page.locator('.vocab-config')).toContainText('cinturón');
+    await expect(page.locator('.vocab-config')).toContainText('Plato muy caliente de sopa.');
+    await expect(page.locator('.vocab-config')).toContainText('Animal volador con plumas.');
+    await page.locator('button.dashboard-tab', { hasText: 'Sesiones y Configuración' }).click();
+    await expect(checkboxes.first()).toBeVisible();
 
     await page.locator('input.exercise-count-input').fill('3');
     // Primero marcar Vocabulario para que no quede 0 tipos seleccionados al desmarcar Lectura
@@ -435,7 +440,7 @@ test.describe('Ona Work - Flujos E2E y Modo Papá', () => {
 
     // 5. Palabra eliminada del listado (aprendida)
     await page.keyboard.press('Alt+KeyP');
-    await expect(page.locator('.vocab-config')).toContainText('Vocabulario en Práctica (0)');
+    await expect(page.locator('button.vocab-tab')).toContainText('Vocabulario en Práctica (0)');
 
     // 6. Al reiniciar solo con Vocabulario sin palabras, no sale Vocabulario
     await page.locator('button.restart-session-btn').click();
@@ -458,15 +463,20 @@ test.describe('Ona Work - Flujos E2E y Modo Papá', () => {
     await page.keyboard.press('Alt+KeyP');
     await expect(page.locator('.dashboard-modal')).toBeVisible();
 
+    await page.locator('button.vocab-tab').click();
     await page.locator('input.vocab-add-input').fill('rasguño');
     await page.locator('button.vocab-add-manual-btn').click();
 
-    await expect(page.locator('.vocab-config')).toContainText('Vocabulario en Práctica (1)');
+    await expect(page.locator('button.vocab-tab')).toContainText('Vocabulario en Práctica (1)');
     await expect(page.locator('.vocab-config')).toContainText('rasguño');
     await expect(page.locator('.vocab-config')).toContainText('Herida pequeña y superficial en la piel.');
+    await expect(page.locator('.vocab-config')).toContainText('Plato muy caliente de sopa.');
+    await expect(page.locator('.vocab-config')).toContainText('Animal volador con plumas.');
 
-    // Dejar solo Vocabulario marcado y reiniciar sesión
+    // Volver a pestaña de configuración, dejar solo Vocabulario marcado y reiniciar sesión
+    await page.locator('button.dashboard-tab', { hasText: 'Sesiones y Configuración' }).click();
     const checkboxes = page.locator('.type-checkbox-label input[type="checkbox"]');
+    await expect(checkboxes.first()).toBeVisible();
     const count = await checkboxes.count();
     for (let i = 0; i < count; i++) {
       const box = checkboxes.nth(i);

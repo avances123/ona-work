@@ -17,6 +17,26 @@ import { findVocabDefinition, normalizeVocabWord } from '../../data/vocab-defini
           <button class="close-btn" (click)="close()">✕</button>
         </header>
 
+        <nav class="dashboard-tabs" role="tablist">
+          <button
+            type="button"
+            class="dashboard-tab"
+            [class.active]="activeTab() === 'general'"
+            (click)="activeTab.set('general')"
+          >
+            Sesiones y Configuración
+          </button>
+          <button
+            type="button"
+            class="dashboard-tab vocab-tab"
+            [class.active]="activeTab() === 'vocab'"
+            (click)="activeTab.set('vocab')"
+          >
+            Vocabulario en Práctica ({{ vocabWords().length }})
+          </button>
+        </nav>
+
+        <div *ngIf="activeTab() === 'general'" class="tab-panel">
         <section class="metrics-summary">
           <div class="stat-card">
             <span class="label">Total Sesiones</span>
@@ -54,53 +74,6 @@ import { findVocabDefinition, normalizeVocabWord } from '../../data/vocab-defini
               />
               <span class="type-name">{{ t.label }}</span>
             </label>
-          </div>
-        </section>
-
-        <section class="vocab-config">
-          <h3>Vocabulario en Práctica ({{ vocabWords().length }})</h3>
-          <div class="vocab-add-row">
-            <input
-              type="text"
-              class="vocab-add-input"
-              placeholder="Añadir palabra (ej. rasguño)..."
-              [value]="newVocabWord()"
-              (input)="newVocabWord.set($any($event.target).value)"
-              (keydown.enter)="addManualVocab()"
-              [disabled]="addingVocab()"
-            />
-            <button
-              type="button"
-              class="vocab-add-manual-btn"
-              [disabled]="addingVocab() || !newVocabWord().trim()"
-              (click)="addManualVocab()"
-            >
-              {{ addingVocab() ? 'Buscando...' : '+ Añadir' }}
-            </button>
-          </div>
-          <div *ngIf="vocabWords().length === 0" class="empty-msg">
-            No hay palabras pendientes. El ejercicio de Vocabulario no aparecerá hasta que añadas una palabra o Ona la seleccione en un relato.
-          </div>
-          <div *ngFor="let w of vocabWords()" class="vocab-item">
-            <div class="vocab-item-top">
-              <strong>{{ w.displayWord }}</strong>
-              <span class="vocab-streak-badge">Racha: {{ w.streak }}/3</span>
-              <button
-                *ngIf="!getVocabDefPreview(w.word, w.definition)"
-                class="vocab-ai-btn"
-                [disabled]="loadingVocabWord() === w.word"
-                (click)="retryVocabAi(w.word)"
-              >
-                {{ loadingVocabWord() === w.word ? 'Buscando...' : '✨ Generar IA' }}
-              </button>
-              <button class="vocab-del-btn" (click)="removeVocab(w.word)" title="Eliminar palabra">✕</button>
-            </div>
-            <div class="vocab-def-preview" *ngIf="getVocabDefPreview(w.word, w.definition) as def; else missingDef">
-              {{ def }}
-            </div>
-            <ng-template #missingDef>
-              <div class="vocab-def-missing">Pendiente de definición (pulsa ✨ Generar IA)</div>
-            </ng-template>
           </div>
         </section>
 
@@ -146,6 +119,60 @@ import { findVocabDefinition, normalizeVocabWord } from '../../data/vocab-defini
             </details>
           </div>
         </section>
+        </div>
+
+        <div *ngIf="activeTab() === 'vocab'" class="tab-panel vocab-tab-panel">
+          <section class="vocab-config">
+            <div class="vocab-add-row">
+              <input
+                type="text"
+                class="vocab-add-input"
+                placeholder="Añadir palabra (ej. rasguño)..."
+                [value]="newVocabWord()"
+                (input)="newVocabWord.set($any($event.target).value)"
+                (keydown.enter)="addManualVocab()"
+                [disabled]="addingVocab()"
+              />
+              <button
+                type="button"
+                class="vocab-add-manual-btn"
+                [disabled]="addingVocab() || !newVocabWord().trim()"
+                (click)="addManualVocab()"
+              >
+                {{ addingVocab() ? 'Buscando...' : '+ Añadir' }}
+              </button>
+            </div>
+            <div *ngIf="vocabWords().length === 0" class="empty-msg">
+              No hay palabras pendientes. El ejercicio de Vocabulario no aparecerá hasta que añadas una palabra o Ona la seleccione en un relato.
+            </div>
+            <div *ngFor="let w of vocabWords()" class="vocab-item">
+              <div class="vocab-item-top">
+                <strong>{{ w.displayWord }}</strong>
+                <span class="vocab-streak-badge">Racha: {{ w.streak }}/3</span>
+                <button
+                  *ngIf="!getVocabDefPreview(w.word, w.definition)"
+                  class="vocab-ai-btn"
+                  [disabled]="loadingVocabWord() === w.word"
+                  (click)="retryVocabAi(w.word)"
+                >
+                  {{ loadingVocabWord() === w.word ? 'Buscando...' : '✨ Generar IA' }}
+                </button>
+                <button class="vocab-del-btn" (click)="removeVocab(w.word)" title="Eliminar palabra">✕</button>
+              </div>
+              <div class="vocab-def-preview" *ngIf="getVocabDefPreview(w.word, w.definition) as def; else missingDef">
+                <span class="vocab-def-label">✓ Correcta:</span> {{ def }}
+              </div>
+              <ng-template #missingDef>
+                <div class="vocab-def-missing">Pendiente de definición (pulsa ✨ Generar IA)</div>
+              </ng-template>
+              <div *ngIf="w.distractors?.length" class="vocab-distractors-list">
+                <div *ngFor="let d of w.distractors" class="vocab-distractor-item">
+                  <span class="vocab-distractor-label">✕ Falsa:</span> {{ d }}
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
 
         <div *ngIf="transferMessage() as msg" class="transfer-status" [class.is-error]="msg.isError">
           {{ msg.text }}
@@ -203,8 +230,40 @@ import { findVocabDefinition, normalizeVocabWord } from '../../data/vocab-defini
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 20px 24px;
+        padding: 16px 24px;
         border-bottom: 1px solid #e2e8f0;
+      }
+      .dashboard-tabs {
+        display: flex;
+        gap: 6px;
+        padding: 10px 24px 0 24px;
+        background: #f8fafc;
+        border-bottom: 1px solid #e2e8f0;
+      }
+      .dashboard-tab {
+        border: 1px solid transparent;
+        border-bottom: none;
+        background: transparent;
+        padding: 8px 14px;
+        border-radius: 8px 8px 0 0;
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #64748b;
+        cursor: pointer;
+      }
+      .dashboard-tab.active {
+        background: #ffffff;
+        color: #0f172a;
+        border-color: #e2e8f0;
+        margin-bottom: -1px;
+        padding-bottom: 9px;
+      }
+      .tab-panel {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
       }
       .modal-header h2 {
         margin: 0;
@@ -446,10 +505,7 @@ import { findVocabDefinition, normalizeVocabWord } from '../../data/vocab-defini
         cursor: pointer;
       }
       .vocab-config {
-        padding: 12px 24px;
-        border-bottom: 1px solid #e2e8f0;
-        max-height: 180px;
-        overflow-y: auto;
+        padding: 16px 24px;
       }
       .vocab-config h3 {
         margin: 0 0 8px 0;
@@ -490,8 +546,25 @@ import { findVocabDefinition, normalizeVocabWord } from '../../data/vocab-defini
         color: #dc2626;
       }
       .vocab-def-preview {
-        font-size: 0.85rem;
-        color: #334155;
+        font-size: 0.86rem;
+        color: #166534;
+      }
+      .vocab-def-label {
+        font-weight: 700;
+      }
+      .vocab-distractors-list {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        margin-top: 2px;
+      }
+      .vocab-distractor-item {
+        font-size: 0.82rem;
+        color: #64748b;
+      }
+      .vocab-distractor-label {
+        font-weight: 700;
+        color: #991b1b;
       }
       .vocab-def-missing {
         font-size: 0.82rem;
@@ -540,6 +613,7 @@ export class ParentDashboardComponent {
   private readonly storage = inject(StorageService);
   private readonly vocabAi = inject(VocabAiService);
   public readonly loadingVocabWord = signal<string | null>(null);
+  public readonly activeTab = signal<'general' | 'vocab'>('general');
   public readonly newVocabWord = signal<string>('');
   public readonly addingVocab = signal<boolean>(false);
   public readonly sessions = this.storage.sessions;
