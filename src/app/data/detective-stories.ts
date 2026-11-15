@@ -120,8 +120,8 @@ export const DETECTIVE_STORIES: DetectiveStoryData[] = [
       '—Un calcetín no se va de vacaciones por su cuenta —murmuró mirando debajo de la cama.',
       'Allí no había nada, pero de pronto oyó un ronquido sospechoso que venía del salón.',
       'Al entrar, vio un caminito de pelos grises sobre la alfombra que llevaba directo hasta el sofá.',
-      'Detrás de los cojines dormía el gato Bigotes hecho una bola redonda y feliz.',
-      'Bigotes abrazaba el calcetín de rayas naranjas como si fuera su peluche favorito.',
+      'Detrás de los cojines dormía el gato Fuet hecho una bola redonda y feliz.',
+      'Fuet abrazaba el calcetín de rayas naranjas como si fuera su peluche favorito.',
       'Ona recuperó el calcetín muy despacio sin despertar al pequeño ladrón peludo.',
     ],
     questions: [
@@ -133,8 +133,8 @@ export const DETECTIVE_STORIES: DetectiveStoryData[] = [
       },
       {
         question: '¿Quién estaba abrazando el calcetín detrás del sofá?',
-        options: ['el gato Bigotes', 'el perro Toby', 'su amigo Guillem'],
-        correctAnswer: 'el gato Bigotes',
+        options: ['el gato Fuet', 'el perro Pili', 'su amigo Guillem'],
+        correctAnswer: 'el gato Fuet',
         clueSentenceIndex: 8,
       },
     ],
@@ -379,11 +379,11 @@ export const DETECTIVE_STORIES: DetectiveStoryData[] = [
     caseTitle: 'Caso 13: El enigma de las botas con barro',
     sentences: [
       'Alguien había entrado en el recibidor dejando un caminito de huellas de barro seco.',
-      'En la casa vivían papá, Ona y el perro Toby, así que había tres sospechosos.',
+      'En la casa vivían papá, Ona y el perro Pili, así que había tres sospechosos.',
       '—Nadie sale de esta habitación hasta descubrir al culpable —anunció Ona muy seria.',
       'Cogió su regla pequeña de madera y midió una de las huellas del suelo.',
       'Eran larguísimas y tenían dibujadas unas rayas de suela muy profundas.',
-      'Eso quería decir que no podían ser las patas peludas de Toby ni las botas pequeñas de Ona.',
+      'Eso quería decir que no podían ser las patas peludas de Pili ni las botas pequeñas de Ona.',
       'Miró el armario de los zapatos y vio sus propias zapatillas limpias y relucientes como un espejo.',
       'Solo quedaba un sospechoso: papá acababa de volver del huerto con una cesta llena de tomates.',
       'Detrás de la puerta estaban escondidas sus botas de agua con el mismo barro seco en los tacones.',
@@ -398,7 +398,7 @@ export const DETECTIVE_STORIES: DetectiveStoryData[] = [
       },
       {
         question: '¿De quién eran las botas con barro?',
-        options: ['de papá', 'de Ariadna', 'del perro Toby'],
+        options: ['de papá', 'de Ariadna', 'del perro Pili'],
         correctAnswer: 'de papá',
         clueSentenceIndex: 8,
       },
@@ -473,7 +473,7 @@ export const DETECTIVE_STORIES: DetectiveStoryData[] = [
   {
     caseTitle: 'Caso 16: El abrigo con sorpresa',
     sentences: [
-      'Al salir de clase de música, todo el mundo tenía prisa y cogió sus cosas corriendo.',
+      'Al salir de clase de karate, todo el mundo tenía prisa y cogió su abrigo corriendo.',
       'Ona se puso su abrigo azul marino y salió muy contenta por el pasillo.',
       'Pero al caminar notó algo rarísimo: ¡las mangas le tapaban casi todos los dedos!',
       '—¿Habré encogido esta tarde? —pensó Ona mirando sus brazos con cara de sorpresa.',
@@ -569,7 +569,7 @@ export const DETECTIVE_STORIES: DetectiveStoryData[] = [
       'En lugar de asustarse, Ona cogió su linterna amarilla y se acercó de puntillas.',
       'Pegó la oreja a la puerta de madera para saber de qué altura venía el ruido.',
       'El sonido llegaba de la parte más baja, justo donde dormían sus zapatillas.',
-      'Abrió la puerta de golpe esperando ver un dragón diminuto o un ratón con sombrero.',
+      'Abrió la puerta de golpe esperando ver a su hámster Salami o a un ratón con sombrero.',
       'Pero solo había una bolsa de papel que caminaba sola despacito por el suelo.',
       'De repente asomó una cabecita verde muy tranquila: ¡era su tortuga Lola!',
       'Lola se había escapado de su caja del pasillo y se había metido a explorar el armario.',
@@ -584,7 +584,7 @@ export const DETECTIVE_STORIES: DetectiveStoryData[] = [
       },
       {
         question: '¿Quién caminaba dentro de la bolsa de papel?',
-        options: ['la tortuga Lola', 'el gato Bigotes', 'un ratón con sombrero'],
+        options: ['la tortuga Lola', 'el gato Fuet', 'el hámster Salami'],
         correctAnswer: 'la tortuga Lola',
         clueSentenceIndex: 7,
       },
@@ -626,7 +626,7 @@ export const DETECTIVE_STORIES: DetectiveStoryData[] = [
   {
     caseTitle: 'Caso 21: El robo de las joyas azules',
     sentences: [
-      'Ona tenía un tesoro muy valioso en su estantería: veinte canicas de cristal en un tarro.',
+      'Ona tenía veinte canicas de cristal en un tarro, justo al lado de la jaula de sus hámsters Luna y Salami.',
       'Un día entró en su cuarto y vio que el tarro tenía la tapa abierta.',
       'Con cara de detective contó las canicas una por una y solo había dieciocho.',
       'Faltaban justo las dos canicas más grandes de color azul brillante.',
